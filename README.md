@@ -8,14 +8,20 @@ DBA4713 Network Analytics with Business Applications Group Project
 - Randy Ng
 
 ## Replicate Analysis
+
+### 1. Creating Git Directory
 Then, to pull the repository to your local computer, open your Terminal/ Windows Prompt, and in your home folder, create a folder called 'git', navigate to that folder with:
 ```
 cd git
 ```
-and run:
+
+### 2. Getting Github Repo onto local device
+Run:
 ```
 git clone https://github.com/AmmarBagharib/amazon_graph_analysis
 ```
+
+### 3. Navigate to local project folder
 then run:
 ```
 cd amazon_graph_analysis
@@ -24,6 +30,8 @@ cd amazon_graph_analysis
 in Mac, in your Terminal you can run `pwd` and it should show:
 
 `(your home folder)/git/amazon_graph_analysis`
+
+### 4. Opening Project environment in RStudio
 
 Now, in your Terminal/ Windows Prompt run:
 ```
@@ -60,7 +68,24 @@ Once done, run:
 usethis::use_git()
 ```
 
-and then run:
+## Git LFS
+As our graph network files are very large, we shouldn't be pushing it onto GitHub everytime we work on our project as it will exceed the size limit.
+
+### Downloading Git LFS
+Visit (https://git-lfs.com/) and download git lfs it onto your device.
+
+### Installing Git LFS on Command Line
+Download and install the Git command line extension. Once downloaded and installed, set up Git LFS for your user account by running:
+```
+git lfs install
+```
+
+In your Terminal/ Windows Prompt, navigate to the project folder as shown in **Step 3** above.
+
+Run:
+```
+git lfs track "*.txt.gz"
+```
 
 ## Working with Git
 
@@ -109,6 +134,7 @@ git push
 ```
 
 8. Close RStudio when you are finished with your project:
+
 
 # Note: NEVER do work on github on a browser, while working on your analysis on your RStudio at the SAME TIME. Should you commit your work on both ends, there will be a merge conflict, because the files on your computer is different from the files on the github repo.
 
