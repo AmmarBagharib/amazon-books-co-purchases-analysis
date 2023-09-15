@@ -89,7 +89,7 @@ conda deactivate
 
 The software provided in this project is offered under the MIT open
 source license. Refer to the
-[license](https://github.com/AmmarBagharib/amazon_graph_analysis/blob/main/LICENSE.md)
+[license](https://github.com/AmmarBagharib/amazon_graph_analysis/blob/master/LICENSE.md)
 file for more information.
 
 
