@@ -1,0 +1,58 @@
+---
+title: "Group Project (exploration)"
+author: "Chen Yang"
+date: "2023-09-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(tidyr)
+library(igraph)
+library(data.table)
+library(glue)
+library(gridExtra)
+library(ggplot2)
+library(glue)
+```
+
+
+```{r read data}
+set.seed(123)
+df <- read.table('Amazon0302.txt')
+g1 <- graph_from_data_frame(df, directed = TRUE)
+```
+
+```{r deg visualization}
+in_deg = degree(g1, mode = "in")
+in_deg = data.frame(deg = in_deg)
+
+ggplot(in_deg, aes(x = deg)) +
+  geom_histogram(bins = 20) +
+  scale_y_continuous(trans = "log10", breaks = c(1, 10, 100, 1000, 100000)) +
+  labs(y = 'freq (log10)', x = 'in degree')
+```
+
+```{r sampling}
+in_deg <- in_deg %>% mutate(bin = cut(deg, breaks = 100, labels = FALSE))
+
+sampled_df <- in_deg %>%
+  group_by(bin) %>%
+  sample_frac(0.0001, replace = FALSE) %>%
+  ungroup()
+
+#get subgraph from sampled vertices
+subg <- induced_subgraph(g1, row.names(sampled_df))
+
+#get largest component
+comps <- clusters(subg)
+largest_comp_ind <- which.max(comps$csize)
+largest_comp_vert <- which(comps$membership == largest_comp_ind)
+
+plot(induced_subgraph(g1, largest_comp_vert), layout = layout.fruchterman.reingold(subg))
+```
+```{r metadata}
+unlisted_meta <- paste(meta, '\n')
+split <- strsplit(unlisted_meta, "Id:\\s+\\d+")
+split[0]
+```
