@@ -53,7 +53,7 @@ git status
 
 6. Every time you make small changes to a notebook file, testing a code/ model, commit your changes to github by doing these 2 steps:
 
-#example: you would like to commit changes on a **single file** e.g., `eda.ipynb`.Run:
+#example: you would like to commit changes on a **single file** e.g., `eda.rmd`.Run:
 ```
 git add eda.rmd
 ```
