@@ -1,6 +1,10 @@
 # amazon_graph_analysis
 
-Then, to pull the repository to your local computer, open your terminal/ windows prompt, and in your home folder, create a folder 'git' and run:
+Then, to pull the repository to your local computer, open your terminal/ windows prompt, and in your home folder, create a folder called 'git', navigate to that folder with:
+```
+cd git
+```
+and run:
 ```
 git clone https://github.com/AmmarBagharib/amazon_graph_analysis
 ```
