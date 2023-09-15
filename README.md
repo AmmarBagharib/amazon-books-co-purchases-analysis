@@ -4,6 +4,7 @@ Then, to pull the repository to your local computer, open your terminal/ windows
 ```
 cd git
 ```
+**Note:** cd is only for Mac, for windows, search how to navigate file directories on your terminal
 and run:
 ```
 git clone https://github.com/AmmarBagharib/amazon_graph_analysis
