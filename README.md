@@ -1,5 +1,12 @@
-# amazon_graph_analysis
+# Amazon Graph Analysis
 
+DBA4713 Network Analytics with Business Applications Group Project
+Authors:
+- Ammar Bagharib
+- Chen Yang
+- Randy Ng
+
+## Replicate Analysis
 Then, to pull the repository to your local computer, open your Terminal/ Windows Prompt, and in your home folder, create a folder called 'git', navigate to that folder with:
 ```
 cd git
@@ -53,6 +60,7 @@ usethis::use_git()
 ```
 
 and then run:
+
 ## Working with Git
 
 1. Every time you want to start working on the project, navigate to `amazon_graph_analysis` file path on your computer and open `amazon_graph_analysis.Rproj`
