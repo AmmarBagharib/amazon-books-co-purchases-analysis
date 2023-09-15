@@ -41,7 +41,7 @@ This project already has a lockfile. What would you like to do?
 4: Abort project initialization.
 ```
 
-Hit the number associated with "Restore the project from the lockfile." and hit 'Enter'. For this example as seen above, we'll be typing `1`.
+Hit the number associated with "Restore the project from the lockfile." For this example as seen above, we'll be typing `1`. Then hit 'Enter'. You should see RStudio now installing the packages within this RProj environment.
 
 then run:
 ```
