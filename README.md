@@ -17,32 +17,32 @@ in Mac, in your Terminal you can run `pwd` and it should show:
 
 `(your home folder)/git/amazon_graph_analysis`
 
-navigate to the project folder, and click on `amazon_graph_analysis.Rproj`
+Now, in your Terminal/ Windows Prompt run:
+```
+open amazon_graph_analysis.Rproj
+```
+**Alternatively**, you can open the project folder using Finder/ and manually click on `amazon_graph_analysis.Rproj` for the same results.
 
 The above step should start RStudio and automatically move you into the project folder.
 
-Once in RStudio, within your `console`, run:
+Once in RStudio, to install all the packages in this RProject environment, within Rstudio's `console`, run:
+
+```
+renv:init() 
+```
+then run:
 ```
 install.packages("usethis")
 ```
-AND
-```
-install.packages("renv")
-```
-
 Once done, run:
 ```
 usethis::use_git()
 ```
 
 and then run:
-```
-renv:init() #install all the packages in this RProject environment.
-```
-
 ## Working with Git
 
-1. Every time you want to start working on the project, navigate to `amazon_graph_analysis` file path on your computer and click on `amazon_graph_analysis.Rproj`
+1. Every time you want to start working on the project, navigate to `amazon_graph_analysis` file path on your computer and open `amazon_graph_analysis.Rproj`
 
 2. Ensure you **didn't make any changes you haven't already committed** to the repository. In Rstudio, you should be able to see the `Terminal` beside the `Console`. Click on `Terminal`, Run:
 ```
