@@ -86,6 +86,7 @@ Run:
 ```
 git lfs track "*.txt.gz"
 ```
+**NOTE**: You only need to do this step **once**.
 
 ## Working with Git
 
