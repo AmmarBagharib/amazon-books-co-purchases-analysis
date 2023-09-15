@@ -30,6 +30,19 @@ Once in RStudio, to install all the packages in this RProject environment, withi
 ```
 renv:init() 
 ```
+
+You should see:
+```
+This project already has a lockfile. What would you like to do? 
+
+1: Restore the project from the lockfile.
+2: Discard the lockfile and re-initialize the project.
+3: Activate the project without snapshotting or installing any packages.
+4: Abort project initialization.
+```
+
+Hit the number associated with "Restore the project from the lockfile." and hit 'Enter'. For this example as seen above, we'll be typing `1`.
+
 then run:
 ```
 install.packages("usethis")
