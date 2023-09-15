@@ -104,7 +104,7 @@ git push
 conda deactivate
 ```
 
-# Note: NEVER do work on github on a browser, while working on your analysis on your IDE at the SAME TIME. Should you commit your work on both ends, there will be a merge conflict, because the files on your computer is different from the files on the github repo.
+# Note: NEVER do work on github on a browser, while working on your analysis on your RStudio at the SAME TIME. Should you commit your work on both ends, there will be a merge conflict, because the files on your computer is different from the files on the github repo.
 
 ## License
 
