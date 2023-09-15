@@ -1,7 +1,8 @@
 # Amazon Graph Analysis
 
 DBA4713 Network Analytics with Business Applications Group Project
-Authors:
+
+# Authors:
 - Ammar Bagharib
 - Chen Yang
 - Randy Ng
