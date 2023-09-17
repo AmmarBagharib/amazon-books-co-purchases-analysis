@@ -17,7 +17,47 @@ library(glue)
 ```
 
 
-```{r read data}
+```{r metadata}
+#read metadata txt
+meta <- readLines("../data/amazon-meta.txt")
+#exclude blanks, reviews, actor/actress info so that we deal with less data
+meta <- meta[meta != "" & !grepl("^\\s*\\d+-\\d+-\\d+\\s*cutomer:\\s*[A-Za-z0-9]+", meta) & !grepl("\\|Actors & Actresses\\[\\d+\\]\\|[^|]*", meta)]
+
+#define regex pattern and identify item id, start/stop index for each item
+pattern <- "^\\s*[iI]+\\s*[dD]+\\s*:+\\s*\\d+$"
+start_ind <- which(grepl(pattern, meta))
+stop_ind <- c(start_ind[2:length(start_ind)]-1, length(meta))
+
+#function to handle empty ID matches
+conditional_fn <- function(x) {
+  ifelse(length(x) == 0, NA, x)
+}
+
+#get item ids with regex
+item_id <- meta[start_ind] %>% regmatches(., gregexpr("\\d+", .)) %>% lapply(., conditional_fn) %>% unlist()
+
+#compile into dataframe
+item_index <- data.frame(id = item_id, start = start_ind, stop = stop_ind, length = stop_ind - start_ind + 1)
+
+#view distribution of attribute length; those with 3 or less are all discontinued products
+item_index %>% group_by(length) %>% summarize(n = n())
+
+#save
+#write.csv(item_index, "item_index.csv")
+```
+
+
+```{r preview item}
+meta[item_index[item_index$length == 3, "start"][1]:item_index[item_index$length == 3, "stop"][1]]
+```
+
+
+```{r test regex pattern}
+test_str <- "    2002-12-9  cutomer:  AWHX6ZSA0UKMF  rating: 4  votes:   2  helpful:   2" 
+test_str %>% grepl("^\\s*\\d+-\\d+-\\d+\\s*cutomer:\\s*[A-Za-z0-9]+", .)
+```
+
+```{r read graph data}
 set.seed(123)
 df <- read.table('Amazon0302.txt')
 g1 <- graph_from_data_frame(df, directed = TRUE)
@@ -50,9 +90,4 @@ largest_comp_ind <- which.max(comps$csize)
 largest_comp_vert <- which(comps$membership == largest_comp_ind)
 
 plot(induced_subgraph(g1, largest_comp_vert), layout = layout.fruchterman.reingold(subg))
-```
-```{r metadata}
-unlisted_meta <- paste(meta, '\n')
-split <- strsplit(unlisted_meta, "Id:\\s+\\d+")
-split[0]
-```
+``
