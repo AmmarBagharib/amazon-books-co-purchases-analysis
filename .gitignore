@@ -5,8 +5,4 @@
 .DS_Store
 .quarto
 
-<<<<<<< HEAD
 data/*
-=======
-.data/*
->>>>>>> c62e6636fd36545f3c7bc54ec59a89c3775dff91
