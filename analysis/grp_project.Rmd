@@ -6,6 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 library(dplyr)
 library(tidyr)
 library(igraph)
@@ -15,12 +16,22 @@ library(gridExtra)
 library(ggplot2)
 library(glue)
 library(stringr)
+library(here)
+```
+
+
+```{r , setup, include=FALSE}
+#set working directory to project root folder
+knitr::opts_knit$set(root.dir = here())
 ```
 
 
 ```{r metadata}
+data_path <- "../data/"
+
 #read metadata txt
-meta <- readLines("../data/amazon-meta.txt")
+meta <- readLines(paste0(data_path, "amazon-meta.txt.gz"))
+
 #exclude blanks, reviews, actor/actress info so that we deal with less data
 meta <- meta[meta != "" & !grepl("^\\s*\\d+-\\d+-\\d+\\s*cutomer:\\s*[A-Za-z0-9]+", meta) & !grepl("\\|Actors & Actresses\\[\\d+\\]\\|[^|]*", meta)]
 
