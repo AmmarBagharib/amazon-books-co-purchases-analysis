@@ -186,3 +186,5 @@ largest_comp_vert <- which(comps$membership == largest_comp_ind)
 
 plot(induced_subgraph(g1, largest_comp_vert), layout = layout.fruchterman.reingold(subg))
 ``
+
+# test
