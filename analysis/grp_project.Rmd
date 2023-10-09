@@ -188,3 +188,4 @@ plot(induced_subgraph(g1, largest_comp_vert), layout = layout.fruchterman.reingo
 ``
 
 
+
