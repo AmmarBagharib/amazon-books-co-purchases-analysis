@@ -23,14 +23,21 @@ library(here)
 ```{r , setup, include=FALSE}
 #set working directory to project root folder
 knitr::opts_knit$set(root.dir = here())
+setwd(here())
 ```
+**Project Background**
 
+Established in 1995 as a pioneering online bookstore, Amazon has been a cherished destination for book enthusiasts for several decades. While the company has evolved and expanded into a diverse range of industries, it has consistently maintained its status as a go-to hub for book shoppers.
+
+In the scope of this project, our objective is to delve into the evolving co-purchase patterns of books over time, understand it's characteristics and underlying patterns. With these information, we'll then develop a model that can provide personalized book recommendations based on books which the customer has added to his/her basket.
+
+In doing so, we anticipate that our efforts will yield a mutually beneficial outcome. By facilitating book discoveries and guiding readers to titles they might not have encountered otherwise, we aim to stimulate sales on the platform, benefiting both Amazon and its thriving community of book lovers.
+
+**1. Preprocessing the Metadata**
 
 ```{r metadata}
-data_path <- "../data/"
-
 #read metadata txt
-meta <- readLines(paste0(data_path, "amazon-meta.txt.gz"))
+meta <- readLines(paste0("../data/amazon-meta.txt"))
 
 #exclude blanks, reviews, actor/actress info so that we deal with less data
 meta <- meta[meta != "" & !grepl("^\\s*\\d+-\\d+-\\d+\\s*cutomer:\\s*[A-Za-z0-9]+", meta) & !grepl("\\|Actors & Actresses\\[\\d+\\]\\|[^|]*", meta)]
@@ -70,6 +77,7 @@ item_index %>% group_by(length) %>% summarize(n = n())
 #save
 #write.csv(item_index, "item_index.csv", row.names = FALSE)
 ```
+
 
 ```{r extract_genre_from_books}
 #create another dataframe which only contain books
@@ -145,28 +153,97 @@ colnames(encoded_data) <- main_genres
 item_index_books <- cbind(item_index_books, encoded_data)
 
 #save csv
-write.csv(item_index_books, "item_index_books.csv", row.names = FALSE)
+#write.csv(item_index_books, "item_index_books.csv", row.names = FALSE)
 
 #preview
-item_index_books
+#item_index_books
 ```
 
 
-```{r read_graph_data}
+**2. Network Characteristics**
+
+```{r read_data}
 set.seed(123)
-df <- read.table('Amazon0302.txt')
-g1 <- graph_from_data_frame(df, directed = TRUE)
+
+#read edge lists
+ls_0302 <- read.table('../data/Amazon0302.txt')
+ls_0312 <- read.table('../data/Amazon0312.txt')
+ls_0505 <- read.table('../data/Amazon0505.txt')
+ls_0601 <- read.table('../data/Amazon0601.txt')
+
+#read processed metadata
+book_data <- read.csv("item_index_books.csv")
+
+#form graphs
+g0302 <- graph_from_data_frame(ls_0302, directed = TRUE)
+g0312 <- graph_from_data_frame(ls_0312, directed = TRUE)
+g0505 <- graph_from_data_frame(ls_0505, directed = TRUE)
+g0601 <- graph_from_data_frame(ls_0601, directed = TRUE)
+
+#subset graphs to only include book nodes
+graph_ls <- c("g0302", "g0312", "g0505", "g0601")
+
+for (each in graph_ls) {
+  graph <- get(each)
+  glue("original node count for {each}: {length(V(graph))}") %>% print()
+  
+  subset <- induced_subgraph(graph, V(graph)[V(graph) %in% book_data$id])
+  assign(each, subset)
+  glue("subset graph node count for {each}: {length(V(subset))}") %>% print()
+  cat("\n")
+}
+
+
+```
+**2.1. Degree Centrality**
+
+In the context of our project, in-degree represents the number of co-purchases which a given book is involved in - books with high in-degree are frequently purchased together with other books. From the graphs, we can see that the network's in-degree distribution follows the power-law, which is a characteristic of a naturally-occurring graph; most books have low in-degree and only a small number of them have high in-degree. the distribution is extremely left-skewed and we have to use a log scale to properly visualize them. To the extreme right, we can see that a small number of books are extremely popular and are co-purchased with more than 1500 other books. 
+
+```{r deg_visualization, fig.width=15, fig.height=5}
+#function to plot histogram
+plot_hist <- function(g, title, x_label, y_label, log_scale = TRUE) {
+  ls <- scale_y_continuous(trans = "log10")
+  labels <- labs(y = y_label, x = x_label, title = title)  # Added title parameter
+  graph <- ggplot() + geom_histogram(aes(x = g)) + labels
+  
+  if (log_scale == TRUE) {
+    return(graph + ls)
+  } else {
+    return(graph)
+  }
+}
+
+#calculate in-degree
+indeg_0302 <- degree(g0302, mode = "in")
+indeg_0312 <- degree(g0312, mode = "in")
+indeg_0505 <- degree(g0505, mode = "in")
+indeg_0601 <- degree(g0601, mode = "in")
+
+indeg_hist0302 <- plot_hist(indeg_0302, "in-degree distribution for 0302", "in-degree", "frequency (log scale)")
+indeg_hist0312 <- plot_hist(indeg_0312, "in-degree distribution for 0312", "in-degree", "frequency (log scale)")
+indeg_hist0505 <- plot_hist(indeg_0505, "in-degree distribution for 0505", "in-degree", "frequency (log scale)")
+indeg_hist0601 <- plot_hist(indeg_0601, "in-degree distribution for 0601", "in-degree", "frequency (log scale)")
+
+grid.arrange(indeg_hist0302, indeg_hist0312, indeg_hist0505, indeg_hist0601, ncol = 2)
 ```
 
-```{r deg_visualization}
-in_deg = degree(g1, mode = "in")
-in_deg = data.frame(deg = in_deg)
+On the other hand, out-degree represents the number of co-purchases which a given book resulted in. Books with high out-degree are more likely to result in a high number of co-purchases. From the graphs shown below, we can see that the out-degree distribution is generally right-skewed - this means that majority of the books are likely to induce a large number of co-purchases; most commonly, 7.5 books are purchased together and in the most extreme cases, 11 books are purchased together.
 
-ggplot(in_deg, aes(x = deg)) +
-  geom_histogram(bins = 20) +
-  scale_y_continuous(trans = "log10", breaks = c(1, 10, 100, 1000, 100000)) +
-  labs(y = 'freq (log10)', x = 'in degree')
+```{r deg_visualization_out, fig.width = 15, fig.height = 5}
+#calculate out-degree
+outdeg_0302 <- degree(g0302, mode = "out")
+outdeg_0312 <- degree(g0312, mode = "out")
+outdeg_0505 <- degree(g0505, mode = "out")
+outdeg_0601 <- degree(g0601, mode = "out")
+
+outdeg_hist0302 <- plot_hist(outdeg_0302, "out-degree distribution for 0302", "out-degree", "frequency (log scale)", log_scale = FALSE)
+outdeg_hist0312 <- plot_hist(outdeg_0312, "out-degree distribution for 0312", "out-degree", "frequency (log scale)", log_scale = FALSE)
+outdeg_hist0505 <- plot_hist(outdeg_0505, "out-degree distribution for 0505", "out-degree", "frequency (log scale)", log_scale = FALSE)
+outdeg_hist0601 <- plot_hist(outdeg_0601, "out-degree distribution for 0601", "out-degree", "frequency (log scale)", log_scale = FALSE)
+
+grid.arrange(outdeg_hist0302, outdeg_hist0312, outdeg_hist0505, outdeg_hist0601, ncol = 2)
 ```
+
 
 ```{r sampling}
 in_deg <- in_deg %>% mutate(bin = cut(deg, breaks = 100, labels = FALSE))
@@ -185,7 +262,7 @@ largest_comp_ind <- which.max(comps$csize)
 largest_comp_vert <- which(comps$membership == largest_comp_ind)
 
 plot(induced_subgraph(g1, largest_comp_vert), layout = layout.fruchterman.reingold(subg))
-``
+```
 
 
 
