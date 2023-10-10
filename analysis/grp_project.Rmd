@@ -175,10 +175,10 @@ ls_0601 <- read.table('../data/Amazon0601.txt')
 book_data <- read.csv("item_index_books.csv")
 
 #form graphs
-g0302 <- graph_from_data_frame(ls_0302, directed = TRUE)
-g0312 <- graph_from_data_frame(ls_0312, directed = TRUE)
-g0505 <- graph_from_data_frame(ls_0505, directed = TRUE)
-g0601 <- graph_from_data_frame(ls_0601, directed = TRUE)
+g0302 <- graph_from_data_frame(ls_0302, directed = FALSE)
+g0312 <- graph_from_data_frame(ls_0312, directed = FALSE)
+g0505 <- graph_from_data_frame(ls_0505, directed = FALSE)
+g0601 <- graph_from_data_frame(ls_0601, directed = FALSE)
 
 #subset graphs to only include book nodes
 graph_ls <- c("g0302", "g0312", "g0505", "g0601")
@@ -197,14 +197,14 @@ for (each in graph_ls) {
 ```
 **2.1. Degree Centrality**
 
-In the context of our project, in-degree represents the number of co-purchases which a given book is involved in - books with high in-degree are frequently purchased together with other books. From the graphs, we can see that the network's in-degree distribution follows the power-law, which is a characteristic of a naturally-occurring graph; most books have low in-degree and only a small number of them have high in-degree. the distribution is extremely left-skewed and we have to use a log scale to properly visualize them. To the extreme right, we can see that a small number of books are extremely popular and are co-purchased with more than 1500 other books. 
+In the context of our project, degree represents the number of other books which a given book is co-purchased with - books with high degree centrality are frequently purchased together with other books. From the graphs, we can see that the network's degree distribution follows the power-law, which is a characteristic of a naturally-occurring graph; most books have low in-degree and only a small number of them have high in-degree. the distribution is extremely left-skewed and we have to use a log scale to properly visualize them. To the extreme right, we can see that a small number of books are extremely popular and are co-purchased with more than 1500 other books. 
 
 ```{r deg_visualization, fig.width=15, fig.height=5}
 #function to plot histogram
 plot_hist <- function(g, title, x_label, y_label, log_scale = TRUE) {
   ls <- scale_y_continuous(trans = "log10")
   labels <- labs(y = y_label, x = x_label, title = title)  # Added title parameter
-  graph <- ggplot() + geom_histogram(aes(x = g)) + labels
+  graph <- ggplot() + geom_histogram(aes(x = g), bins = 100) + labels
   
   if (log_scale == TRUE) {
     return(graph + ls)
@@ -213,55 +213,46 @@ plot_hist <- function(g, title, x_label, y_label, log_scale = TRUE) {
   }
 }
 
-#calculate in-degree
-indeg_0302 <- degree(g0302, mode = "in")
-indeg_0312 <- degree(g0312, mode = "in")
-indeg_0505 <- degree(g0505, mode = "in")
-indeg_0601 <- degree(g0601, mode = "in")
+#calculate degree centrality for each graph
+deg_0302 <- degree(g0302, mode = "in")
+deg_0312 <- degree(g0312, mode = "in")
+deg_0505 <- degree(g0505, mode = "in")
+deg_0601 <- degree(g0601, mode = "in")
 
-indeg_hist0302 <- plot_hist(indeg_0302, "in-degree distribution for 0302", "in-degree", "frequency (log scale)")
-indeg_hist0312 <- plot_hist(indeg_0312, "in-degree distribution for 0312", "in-degree", "frequency (log scale)")
-indeg_hist0505 <- plot_hist(indeg_0505, "in-degree distribution for 0505", "in-degree", "frequency (log scale)")
-indeg_hist0601 <- plot_hist(indeg_0601, "in-degree distribution for 0601", "in-degree", "frequency (log scale)")
+deg_hist0302 <- plot_hist(deg_0302, "in-degree distribution for 0302", "in-degree", "frequency (log scale)")
+deg_hist0312 <- plot_hist(deg_0312, "in-degree distribution for 0312", "in-degree", "frequency (log scale)")
+deg_hist0505 <- plot_hist(deg_0505, "in-degree distribution for 0505", "in-degree", "frequency (log scale)")
+deg_hist0601 <- plot_hist(deg_0601, "in-degree distribution for 0601", "in-degree", "frequency (log scale)")
 
-grid.arrange(indeg_hist0302, indeg_hist0312, indeg_hist0505, indeg_hist0601, ncol = 2)
-```
-
-On the other hand, out-degree represents the number of co-purchases which a given book resulted in. Books with high out-degree are more likely to result in a high number of co-purchases. From the graphs shown below, we can see that the out-degree distribution is generally right-skewed - this means that majority of the books are likely to induce a large number of co-purchases; most commonly, 7.5 books are purchased together and in the most extreme cases, 11 books are purchased together.
-
-```{r deg_visualization_out, fig.width = 15, fig.height = 5}
-#calculate out-degree
-outdeg_0302 <- degree(g0302, mode = "out")
-outdeg_0312 <- degree(g0312, mode = "out")
-outdeg_0505 <- degree(g0505, mode = "out")
-outdeg_0601 <- degree(g0601, mode = "out")
-
-outdeg_hist0302 <- plot_hist(outdeg_0302, "out-degree distribution for 0302", "out-degree", "frequency (log scale)", log_scale = FALSE)
-outdeg_hist0312 <- plot_hist(outdeg_0312, "out-degree distribution for 0312", "out-degree", "frequency (log scale)", log_scale = FALSE)
-outdeg_hist0505 <- plot_hist(outdeg_0505, "out-degree distribution for 0505", "out-degree", "frequency (log scale)", log_scale = FALSE)
-outdeg_hist0601 <- plot_hist(outdeg_0601, "out-degree distribution for 0601", "out-degree", "frequency (log scale)", log_scale = FALSE)
-
-grid.arrange(outdeg_hist0302, outdeg_hist0312, outdeg_hist0505, outdeg_hist0601, ncol = 2)
+grid.arrange(deg_hist0302, deg_hist0312, deg_hist0505, deg_hist0601, ncol = 2)
 ```
 
 
-```{r sampling}
-in_deg <- in_deg %>% mutate(bin = cut(deg, breaks = 100, labels = FALSE))
 
-sampled_df <- in_deg %>%
+
+```{r sampling, fig.width = 15, fig.height = 10}
+df_deg_0302<- as.data.frame(deg_0302) %>%mutate(bin = cut(.$deg_0302, breaks = 100, labels = FALSE))
+
+sampled_df <- df_deg_0302 %>%
   group_by(bin) %>%
-  sample_frac(0.0001, replace = FALSE) %>%
+  sample_frac(0.0005, replace = FALSE) %>%
   ungroup()
 
 #get subgraph from sampled vertices
-subg <- induced_subgraph(g1, row.names(sampled_df))
+subg <- induced_subgraph(g0302, V(g0302)[as_ids(V(g0302)) %in% row.names(sampled_df)])
 
 #get largest component
 comps <- clusters(subg)
 largest_comp_ind <- which.max(comps$csize)
 largest_comp_vert <- which(comps$membership == largest_comp_ind)
+largest_comp_subg <- induced_subgraph(subg, largest_comp_vert)
 
-plot(induced_subgraph(g1, largest_comp_vert), layout = layout.fruchterman.reingold(subg))
+#visualize largest component
+plot(largest_comp_subg, layout = layout.fruchterman.reingold(subg), vertex.size = degree(largest_comp_subg))
+#degree distribution for sampled graph
+plot_hist(degree(subg), "Degree Centrality distribution for sampled graph", "degree centrality", "frequency", log_scale = FALSE)
+#degree distribution for largest component
+plot_hist(degree(largest_comp_subg), "Degree Centrality distribution for largest component", "degree centrality", "frequency", log_scale = FALSE)
 ```
 
 
