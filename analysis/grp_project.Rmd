@@ -79,7 +79,7 @@ item_index %>% group_by(length) %>% summarize(n = n())
 ```
 
 
-```{r extract_genre_from_books}
+```{r extract_features_from_books}
 #create another dataframe which only contain books
 item_index_books <- item_index[item_index$type == "Book",] %>% drop_na()
 
@@ -89,9 +89,18 @@ item_index_books <- item_index[item_index$type == "Book",] %>% drop_na()
 #define regex pattern for elements containing genre info
 genre_pattern <- "\\|\\w+\\[\\d+\\]\\|"
 
-#empty list to hold extracted genres and the re-concatenated genre string
+#regex patterns for rating, reviews and salesrank
+rating_pattern = "avg rating:\\s*(\\d+(\\.\\d+)?)"
+reviews_pattern = "reviews:\\s*total:\\s*(\\d+)"
+salesrank_pattern = "salesrank:\\s*(\\d+)"
+
+#empty list to hold extracted features and the re-concatenated genre string
 main_genres <- c()
 cleaned_genres <- c()
+
+rating_ls <- c()
+reviews_ls <- c()
+salesrank_ls <- c()
 
 #elements to exclude as they are not genres
 non_genre_elems<- c(
@@ -124,17 +133,41 @@ for (i in 1:length(row.names(item_index_books))) {
   
   #add main genre to main_genres vector if it's not already inside
   main_genres <- c(main_genres, genres_clean[1][!(genres_clean[1] %in% main_genres)])
+  
+  #get rating
+  rating =  char_vec %>% str_extract(., rating_pattern) %>% unlist() %>% .[!is.na(.)] %>% gsub("avg rating: ", "", .) %>% as.numeric()
+  rating == ifelse(length(rating) == 0, 0, rating)
+  rating_ls <- c(rating_ls, rating)
+  
+  #get reviews
+  reviews = char_vec %>% str_extract(., reviews_pattern) %>% unlist() %>% .[!is.na(.)] %>% gsub("reviews:\\s*total:\\s*", "", .) %>% as.numeric()
+  reviews = ifelse(length(reviews) == 0, 0, reviews)
+  reviews_ls <- c(reviews_ls, reviews)
+  
+  #get salesrank
+  salesrank = char_vec %>% str_extract(., salesrank_pattern) %>% unlist() %>% .[!is.na(.)] %>% gsub("salesrank:\\s*", "", .) %>% as.numeric()
+  salesrank = ifelse(length(salesrank) == 0, 9999999, salesrank)
+  salesrank_ls <- c(salesrank_ls, salesrank)
+  
+  #sound off for every 1000 books processed (to track progress)
+  if (i %% 1000 == 0) {
+    print(glue("{i} books processed"))
+  }
 }
 
 #remove NA elements
 main_genres <- main_genres[!(is.na(main_genres))]
 main_genres[!(main_genres %in% non_genre_elems)]
 
-#check if number of cleaned genres equal to number of rows in books dataframe
+#save features to dataframe
 item_index_books$cleaned_genres <- cleaned_genres
+item_index_books$rating <- rating_ls
+item_index_books$reviews <- reviews_ls
+item_index_books$salesrank <- salesrank_ls
 #save csv
 #write.csv(item_index_books, "item_index_books.csv", row.names = FALSE)
 ```
+
 
 
 ```{r genre_one_hot_encoding}
