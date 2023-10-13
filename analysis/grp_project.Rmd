@@ -197,7 +197,7 @@ item_index_books <- cbind(item_index_books, encoded_data)
 
 ```{r read_data}
 set.seed(123)
-
+setwd(here())
 #read edge lists
 ls_0302 <- read.table('../data/Amazon0302.txt')
 ls_0312 <- read.table('../data/Amazon0312.txt')
@@ -205,7 +205,7 @@ ls_0505 <- read.table('../data/Amazon0505.txt')
 ls_0601 <- read.table('../data/Amazon0601.txt')
 
 #read processed metadata
-book_data <- read.csv("item_index_books.csv")
+book_data <- read.csv("../data/item_index_books.csv")
 
 #form graphs
 g0302 <- graph_from_data_frame(ls_0302, directed = FALSE)
@@ -213,20 +213,17 @@ g0312 <- graph_from_data_frame(ls_0312, directed = FALSE)
 g0505 <- graph_from_data_frame(ls_0505, directed = FALSE)
 g0601 <- graph_from_data_frame(ls_0601, directed = FALSE)
 
-#subset graphs to only include book nodes
-graph_ls <- c("g0302", "g0312", "g0505", "g0601")
+#merge graphs
+merged_total_network <- union(g0302, g0312, g0505, g0601)
 
-for (each in graph_ls) {
-  graph <- get(each)
-  glue("original node count for {each}: {length(V(graph))}") %>% print()
-  
-  subset <- induced_subgraph(graph, V(graph)[V(graph) %in% book_data$id])
-  assign(each, subset)
-  glue("subset graph node count for {each}: {length(V(subset))}") %>% print()
-  cat("\n")
-}
+#calculate degree centrality and store as df
+deg_total_network <- degree(merged_total_network)
+deg_total_df <- data.frame(vertex_id = as.numeric(as_ids(V(merged_total_network))), degree = deg_total_network)
+deg_total_df <- deg_total_df %>% left_join(book_data[,c("id", "salesrank")], by = c("vertex_id" = "id")) %>% unique() %>% na.omit()
 
+node_fltr <- V(merged_total_network)[V(merged_total_network) %>% as_ids() %in% deg_total_df$vertex_id]
 
+induced_subgraph(merged_total_network, node_fltr)
 ```
 **2.1. Degree Centrality**
 
@@ -259,11 +256,17 @@ deg_hist0601 <- plot_hist(deg_0601, "in-degree distribution for 0601", "in-degre
 
 grid.arrange(deg_hist0302, deg_hist0312, deg_hist0505, deg_hist0601, ncol = 2)
 ```
-
+```{r}
+deg_0302_book <- degree(g0302_book)
+df_deg_0302_book <- as.data.frame(deg_0302_book) %>% mutate(bin = cut(.$deg_0302_book, breaks = 100, labels = FALSE))
+df_deg_0302_book %>% left_join(book_data[, c("id", "salesrank")], by = c("deg_0302_book" = "id"))
+```
 
 
 
 ```{r sampling, fig.width = 15, fig.height = 10}
+df_deg_0302 %>% left_join(book_data[, c("id", "salesrank")], by = c("deg_0302" = "id"))
+
 df_deg_0302<- as.data.frame(deg_0302) %>%mutate(bin = cut(.$deg_0302, breaks = 100, labels = FALSE))
 
 sampled_df <- df_deg_0302 %>%
@@ -287,6 +290,12 @@ plot_hist(degree(subg), "Degree Centrality distribution for sampled graph", "deg
 #degree distribution for largest component
 plot_hist(degree(largest_comp_subg), "Degree Centrality distribution for largest component", "degree centrality", "frequency", log_scale = FALSE)
 ```
+
+
+
+
+
+
 
 
 
