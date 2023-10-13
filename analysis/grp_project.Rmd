@@ -216,14 +216,46 @@ g0601 <- graph_from_data_frame(ls_0601, directed = FALSE)
 #merge graphs
 merged_total_network <- union(g0302, g0312, g0505, g0601)
 
-#calculate degree centrality and store as df
+#calculate degree centrality for whole network and store as df
 deg_total_network <- degree(merged_total_network)
 deg_total_df <- data.frame(vertex_id = as.numeric(as_ids(V(merged_total_network))), degree = deg_total_network)
+
+#subset out 'books' 
 deg_total_df <- deg_total_df %>% left_join(book_data[,c("id", "salesrank")], by = c("vertex_id" = "id")) %>% unique() %>% na.omit()
 
+# create subgraph of books
 node_fltr <- V(merged_total_network)[V(merged_total_network) %>% as_ids() %in% deg_total_df$vertex_id]
+book_subgraph <- induced_subgraph(merged_total_network, node_fltr)
+summary(book_subgraph)
+```
 
-induced_subgraph(merged_total_network, node_fltr)
+
+```{r node_attributes}
+deg_total_df <-deg_total_df %>% mutate(degree_bin = cut(.$degree, breaks = 10, labels = FALSE)) %>% mutate(salesrank_bin = cut(.$salesrank, breaks = 4, labels = FALSE))
+
+book_sampled_df <- deg_total_df %>% group_by(degree_bin, salesrank_bin) %>% sample_frac(0.1, replace=FALSE) %>% ungroup()
+book_sampled_subgraph <- induced_subgraph(book_subgraph, V(book_subgraph)[as_ids(V(book_subgraph)) %in% row.names(book_sampled_df)])
+## There is an issue here. The df has 29k rows which is exactly 10%. However, the subgraph has 21k nodes.
+
+# sampled subgraph graph attributes
+sampled_transitivity <- transitivity(book_sampled_subgraph, type="global")
+sampled_density <- graph.density(book_sampled_subgraph)
+sampled_closeness <- closeness(book_sampled_subgraph)
+sampled_betweenness <- betweenness(book_sampled_subgraph)
+
+#adding to the dataframe
+book_sampled_df$closeness <- sampled_closeness
+book_sampled_df$betweenness <- sampled_betweenness
+
+
+# print(summary(book_sampled_subgraph))
+message(paste("Global transitivity for sampled subgraph is", sampled_transitivity, "and density is", sampled_density))
+```
+
+```{r graph-attributes}
+global_transitivity = transitivity(book_subgraph, type="global")
+density = graph.density(book_subgraph)
+message(paste("Global transitivity is", global_transitivity, "and density is", density))
 ```
 **2.1. Degree Centrality**
 
@@ -255,11 +287,6 @@ deg_hist0505 <- plot_hist(deg_0505, "in-degree distribution for 0505", "in-degre
 deg_hist0601 <- plot_hist(deg_0601, "in-degree distribution for 0601", "in-degree", "frequency (log scale)")
 
 grid.arrange(deg_hist0302, deg_hist0312, deg_hist0505, deg_hist0601, ncol = 2)
-```
-```{r}
-deg_0302_book <- degree(g0302_book)
-df_deg_0302_book <- as.data.frame(deg_0302_book) %>% mutate(bin = cut(.$deg_0302_book, breaks = 100, labels = FALSE))
-df_deg_0302_book %>% left_join(book_data[, c("id", "salesrank")], by = c("deg_0302_book" = "id"))
 ```
 
 
