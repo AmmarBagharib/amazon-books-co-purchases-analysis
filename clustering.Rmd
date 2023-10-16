@@ -1,0 +1,100 @@
+---
+title: "clustering"
+author: "Ammar"
+date: "2023-10-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+library(dplyr)
+library(tidyr)
+library(igraph)
+library(data.table)
+library(glue)
+library(gridExtra)
+library(ggplot2)
+library(glue)
+library(stringr)
+library(here)
+```
+
+```{r , setup, include=FALSE}
+#set working directory to project root folder
+knitr::opts_knit$set(root.dir = here())
+```
+
+```{r}
+book_data <- data.table(distinct(read.csv("../data/item_index_books.csv")))
+
+# Split the 'cleaned_genres' column by '|' and extract the first genre
+book_data[, first_genre := sub("\\|.*", "", cleaned_genres)]
+
+# Get the counts of the first genre
+genre_counts <- book_data[, .N, by = first_genre]
+
+head(book_data)
+
+ls_0302 <- read.table('../data/Amazon0302.txt')
+g0302 <- graph_from_data_frame(ls_0302, directed = FALSE)
+```
+
+```{r}
+node_degrees <- degree(g0302)
+
+# Find the nodes with degree == 1
+nodes_with_degree_max_1 <- which(node_degrees <= 1)
+
+length(nodes_with_degree_max_1)
+
+nodes_with_degree_min_2 <- which(node_degrees > 1)
+
+length(nodes_with_degree_min_2)
+
+book_attributes <- book_data[, c("id", "first_genre", "salesrank", "rating", "reviews")]
+
+unique(book_attributes$first_genre) #notice that there are empty genres
+```
+
+```{r}
+g_df <- as_long_data_frame(g0302)
+
+# Left join 'book_attributes' onto 'g_df' based on "from_name" and "id"
+result_df <- inner_join(g_df, book_attributes, by = c("from" = "id")) %>%
+  rename(
+    "from_first_genre"="first_genre", 
+    "from_salesrank"="salesrank",
+    "from_rating"="rating",
+    "from_reviews"="reviews"
+    ) %>%
+  left_join(., book_attributes, by = c("to" = "id")) %>%
+  rename(
+    "to_first_genre"="first_genre", 
+    "to_salesrank"="salesrank",
+    "to_rating"="rating",
+    "to_reviews"="reviews"
+    ) %>%
+  filter(!is.na(from_first_genre)) %>% #filter any from empty genres
+  filter(!is.na(to_first_genre)) #filter and to empty genres
+
+
+nrow(result_df)
+head(result_df)
+```
+
+```{r}
+#remove empty genres
+
+
+
+result_df %>% filter(from_first_genre != to_first_genre) %>% nrow()
+
+result_df %>% filter(from_first_genre == to_first_genre) %>% nrow()
+
+
+```
+
+
+
+
+
