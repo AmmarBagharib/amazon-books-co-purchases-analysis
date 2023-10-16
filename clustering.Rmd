@@ -37,6 +37,8 @@ head(book_data)
 
 ls_0302 <- read.table('../data/Amazon0302.txt')
 g0302 <- graph_from_data_frame(ls_0302, directed = FALSE)
+
+g_df <- as_long_data_frame(g0302)
 ```
 
 ```{r}
@@ -57,7 +59,6 @@ unique(book_attributes$first_genre) #notice that there are empty genres
 ```
 
 ```{r}
-g_df <- as_long_data_frame(g0302)
 
 # Left join 'book_attributes' onto 'g_df' based on "from_name" and "id"
 result_df <- inner_join(g_df, book_attributes, by = c("from" = "id")) %>%
@@ -74,8 +75,8 @@ result_df <- inner_join(g_df, book_attributes, by = c("from" = "id")) %>%
     "to_rating"="rating",
     "to_reviews"="reviews"
     ) %>%
-  filter(!is.na(from_first_genre)) %>% #filter any from empty genres
-  filter(!is.na(to_first_genre)) #filter and to empty genres
+  #filter out empty from or to genres, and from or to reviews <= 1
+  filter(from_first_genre != "", to_first_genre != "", from_reviews <= 1, to_reviews <= 1)
 
 
 nrow(result_df)
@@ -83,14 +84,14 @@ head(result_df)
 ```
 
 ```{r}
-#remove empty genres
+# count rows where from first_genre != to first_genre
+x1 = result_df %>% filter(from_first_genre != to_first_genre) %>% nrow()
 
+# count rows where from first_genre == to first_genre
+x2 = result_df %>% filter(from_first_genre == to_first_genre) %>% nrow()
 
-
-result_df %>% filter(from_first_genre != to_first_genre) %>% nrow()
-
-result_df %>% filter(from_first_genre == to_first_genre) %>% nrow()
-
+# count rows where 
+result_df %>% filter(from_reviews < 50 & from_reviews > 1) %>% nrow()
 
 ```
 
