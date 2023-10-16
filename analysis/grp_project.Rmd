@@ -36,7 +36,7 @@ In doing so, we anticipate that our efforts will yield a mutually beneficial out
 
 ```{r read_data}
 set.seed(123)
-setwd(here())
+
 #read edge lists
 ls_0302 <- read.table('../data/Amazon0302.txt')
 ls_0312 <- read.table('../data/Amazon0312.txt')
@@ -52,15 +52,27 @@ g0312 <- graph_from_data_frame(ls_0312, directed = FALSE)
 g0505 <- graph_from_data_frame(ls_0505, directed = FALSE)
 g0601 <- graph_from_data_frame(ls_0601, directed = FALSE)
 
+g0302
+g0312
+g0505
+g0601
+
 #merge graphs
 merged_total_network <- union(g0302, g0312, g0505, g0601)
+summary(merged_total_network)
 
+```
+
+
+```{r book_subgraph}
+# as seen above, graph is undirected
 #calculate degree centrality for whole network and store as df
 deg_total_network <- degree(merged_total_network)
 deg_total_df <- data.frame(vertex_id = as.numeric(as_ids(V(merged_total_network))), degree = deg_total_network)
 
 #subset out 'books' 
-deg_total_df <- deg_total_df %>% left_join(book_data[,c("id", "salesrank")], by = c("vertex_id" = "id")) %>% unique() %>% na.omit()
+deg_total_df <- deg_total_df %>% left_join(book_data[,c("id", "salesrank")], 
+                                           by = c("vertex_id" = "id")) %>% unique() %>% na.omit()
 
 # create subgraph of books
 node_fltr <- V(merged_total_network)[V(merged_total_network) %>% as_ids() %in% deg_total_df$vertex_id]
@@ -70,9 +82,16 @@ summary(book_subgraph)
 
 
 ```{r node_attributes}
-deg_total_df <-deg_total_df %>% mutate(degree_bin = cut(.$degree, breaks = 10, labels = FALSE)) %>% mutate(salesrank_bin = cut(.$salesrank, breaks = 4, labels = FALSE))
+deg_total_df <-deg_total_df %>% 
+  mutate(degree_bin = cut(.$degree, breaks = 10, labels = FALSE)) %>% 
+  mutate(salesrank_bin = cut(.$salesrank, breaks = 4, labels = FALSE))
 
-book_sampled_df <- deg_total_df %>% group_by(degree_bin, salesrank_bin) %>% sample_frac(0.1, replace=FALSE) %>% ungroup()
+# sample 10% of entire book subgraph
+book_sampled_df <- deg_total_df %>% 
+  group_by(degree_bin, salesrank_bin) %>% 
+  sample_frac(0.1, replace=FALSE) %>% 
+  ungroup()
+
 book_sampled_subgraph <- induced_subgraph(book_subgraph, V(book_subgraph)[as_ids(V(book_subgraph)) %in% row.names(book_sampled_df)])
 ## There is an issue here. The df has 29k rows which is exactly 10%. However, the subgraph has 21k nodes.
 
