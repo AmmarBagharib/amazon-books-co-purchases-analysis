@@ -60,6 +60,8 @@ vertex_names <- unique(c(result_df$from, result_df$to))
 # filtered book_data
 book_filtered <- book_data %>% filter(id %in% vertex_names)
 
+write.csv(book_filtered, here("outputs/book_filtered.csv"), row.names=FALSE)
+
 # Create an igraph object
 g <- graph_from_data_frame(result_df[, c("from", "to")], directed=FALSE)
 
