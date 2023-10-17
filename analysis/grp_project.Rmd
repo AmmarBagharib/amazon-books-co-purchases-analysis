@@ -1,6 +1,6 @@
 ---
 title: "Group Project (exploration)"
-author: "Chen Yang"
+author: "group"
 date: "2023-09-15"
 output: html_document
 ---
@@ -14,7 +14,6 @@ library(data.table)
 library(glue)
 library(gridExtra)
 library(ggplot2)
-library(glue)
 library(stringr)
 library(here)
 ```
@@ -37,82 +36,27 @@ In doing so, we anticipate that our efforts will yield a mutually beneficial out
 ```{r read_data}
 set.seed(123)
 
-#read edge lists
-ls_0302 <- read.table('../data/Amazon0302.txt')
-ls_0312 <- read.table('../data/Amazon0312.txt')
-ls_0505 <- read.table('../data/Amazon0505.txt')
-ls_0601 <- read.table('../data/Amazon0601.txt')
+# Read the graph from the GraphML file
+g <- read_graph(here("outputs/filtered_graph.graphml"), format = "graphml")
+# read filtered book data
+books_df <- read.csv(here("outputs/book_filtered.csv"))
 
-#read processed metadata
-book_data <- read.csv("../data/item_index_books.csv")
+g
 
-#form graphs
-g0302 <- graph_from_data_frame(ls_0302, directed = FALSE)
-g0312 <- graph_from_data_frame(ls_0312, directed = FALSE)
-g0505 <- graph_from_data_frame(ls_0505, directed = FALSE)
-g0601 <- graph_from_data_frame(ls_0601, directed = FALSE)
-
-g0302
-g0312
-g0505
-g0601
-
-#merge graphs
-merged_total_network <- union(g0302, g0312, g0505, g0601)
-summary(merged_total_network)
+head(books_df)
 
 ```
 
-
-```{r book_subgraph}
-# as seen above, graph is undirected
-#calculate degree centrality for whole network and store as df
-deg_total_network <- degree(merged_total_network)
-deg_total_df <- data.frame(vertex_id = as.numeric(as_ids(V(merged_total_network))), degree = deg_total_network)
-
-#subset out 'books' 
-deg_total_df <- deg_total_df %>% left_join(book_data[,c("id", "salesrank")], 
-                                           by = c("vertex_id" = "id")) %>% unique() %>% na.omit()
-
-# create subgraph of books
-node_fltr <- V(merged_total_network)[V(merged_total_network) %>% as_ids() %in% deg_total_df$vertex_id]
-book_subgraph <- induced_subgraph(merged_total_network, node_fltr)
-summary(book_subgraph)
-```
 
 
 ```{r node_attributes}
-deg_total_df <-deg_total_df %>% 
-  mutate(degree_bin = cut(.$degree, breaks = 10, labels = FALSE)) %>% 
-  mutate(salesrank_bin = cut(.$salesrank, breaks = 4, labels = FALSE))
 
-# sample 10% of entire book subgraph
-book_sampled_df <- deg_total_df %>% 
-  group_by(degree_bin, salesrank_bin) %>% 
-  sample_frac(0.1, replace=FALSE) %>% 
-  ungroup()
-
-book_sampled_subgraph <- induced_subgraph(book_subgraph, V(book_subgraph)[as_ids(V(book_subgraph)) %in% row.names(book_sampled_df)])
-## There is an issue here. The df has 29k rows which is exactly 10%. However, the subgraph has 21k nodes.
-
-# sampled subgraph graph attributes
-sampled_transitivity <- transitivity(book_sampled_subgraph, type="global")
-sampled_density <- graph.density(book_sampled_subgraph)
-sampled_closeness <- closeness(book_sampled_subgraph)
-sampled_betweenness <- betweenness(book_sampled_subgraph)
-
-#adding to the dataframe
-book_sampled_df$closeness <- sampled_closeness
-book_sampled_df$betweenness <- sampled_betweenness
-
-
-# print(summary(book_sampled_subgraph))
-message(paste("Global transitivity for sampled subgraph is", sampled_transitivity, "and density is", sampled_density))
+# to fill
 ```
 
 ```{r graph-attributes}
-global_transitivity = transitivity(book_subgraph, type="global")
-density = graph.density(book_subgraph)
+global_transitivity = transitivity(g, type="global")
+density = graph.density(g)
 message(paste("Global transitivity is", global_transitivity, "and density is", density))
 ```
 
@@ -135,43 +79,25 @@ plot_hist <- function(g, title, x_label, y_label, log_scale = TRUE) {
 }
 
 #calculate degree centrality for each graph
-deg_0302 <- degree(g0302, mode = "in")
-deg_0312 <- degree(g0312, mode = "in")
-deg_0505 <- degree(g0505, mode = "in")
-deg_0601 <- degree(g0601, mode = "in")
+deg <- degree(g, mode = "in")
 
-deg_hist0302 <- plot_hist(deg_0302, "in-degree distribution for 0302", "in-degree", "frequency (log scale)")
-deg_hist0312 <- plot_hist(deg_0312, "in-degree distribution for 0312", "in-degree", "frequency (log scale)")
-deg_hist0505 <- plot_hist(deg_0505, "in-degree distribution for 0505", "in-degree", "frequency (log scale)")
-deg_hist0601 <- plot_hist(deg_0601, "in-degree distribution for 0601", "in-degree", "frequency (log scale)")
+plot_hist(deg, "in-degree distribution for 0302", "in-degree", "frequency (log scale)")
 
-grid.arrange(deg_hist0302, deg_hist0312, deg_hist0505, deg_hist0601, ncol = 2)
 ```
 
 
-```{r sampling, fig.width = 15, fig.height = 10}
-df_deg_0302 %>% left_join(book_data[, c("id", "salesrank")], by = c("deg_0302" = "id"))
-
-df_deg_0302<- as.data.frame(deg_0302) %>%mutate(bin = cut(.$deg_0302, breaks = 100, labels = FALSE))
-
-sampled_df <- df_deg_0302 %>%
-  group_by(bin) %>%
-  sample_frac(0.0005, replace = FALSE) %>%
-  ungroup()
-
-#get subgraph from sampled vertices
-subg <- induced_subgraph(g0302, V(g0302)[as_ids(V(g0302)) %in% row.names(sampled_df)])
+```{r component, fig.width = 15, fig.height = 10}
 
 #get largest component
-comps <- clusters(subg)
+comps <- clusters(g)
 largest_comp_ind <- which.max(comps$csize)
 largest_comp_vert <- which(comps$membership == largest_comp_ind)
-largest_comp_subg <- induced_subgraph(subg, largest_comp_vert)
+largest_comp_subg <- induced_subgraph(g, largest_comp_vert)
 
 #visualize largest component
-plot(largest_comp_subg, layout = layout.fruchterman.reingold(subg), vertex.size = degree(largest_comp_subg))
+plot(largest_comp_subg, layout = layout.fruchterman.reingold(g), vertex.size = degree(largest_comp_subg))
 #degree distribution for sampled graph
-plot_hist(degree(subg), "Degree Centrality distribution for sampled graph", "degree centrality", "frequency", log_scale = FALSE)
+plot_hist(degree(g), "Degree Centrality distribution for sampled graph", "degree centrality", "frequency", log_scale = FALSE)
 #degree distribution for largest component
 plot_hist(degree(largest_comp_subg), "Degree Centrality distribution for largest component", "degree centrality", "frequency", log_scale = FALSE)
 ```

@@ -1,0 +1,174 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+library(dplyr)
+library(tidyr)
+library(igraph)
+library(data.table)
+library(glue)
+library(gridExtra)
+library(ggplot2)
+library(glue)
+library(stringr)
+library(here)
+```
+
+```{r , setup, include=FALSE}
+#set working directory to project root folder
+knitr::opts_knit$set(root.dir = here())
+```
+
+**Project Background**
+
+Established in 1995 as a pioneering online bookstore, Amazon has been a cherished destination for book enthusiasts for several decades. While the company has evolved and expanded into a diverse range of industries, it has consistently maintained its status as a go-to hub for book shoppers.
+
+In the scope of this project, our objective is to delve into the evolving co-purchase patterns of books over time, understand it's characteristics and underlying patterns. With these information, we'll then develop a model that can provide personalized book recommendations based on books which the customer has added to his/her basket.
+
+In doing so, we anticipate that our efforts will yield a mutually beneficial outcome. By facilitating book discoveries and guiding readers to titles they might not have encountered otherwise, we aim to stimulate sales on the platform, benefiting both Amazon and its thriving community of book lovers.
+
+**1. Network Characteristics**
+
+```{r read_data}
+set.seed(123)
+
+#read edge lists
+ls_0302 <- read.table('../data/Amazon0302.txt')
+ls_0312 <- read.table('../data/Amazon0312.txt')
+ls_0505 <- read.table('../data/Amazon0505.txt')
+ls_0601 <- read.table('../data/Amazon0601.txt')
+
+#read processed metadata
+book_data <- read.csv("../data/item_index_books.csv")
+
+#form graphs
+#g0302 <- graph_from_data_frame(ls_0302, directed = FALSE)
+#g0312 <- graph_from_data_frame(ls_0312, directed = FALSE)
+#g0505 <- graph_from_data_frame(ls_0505, directed = FALSE)
+#g0601 <- graph_from_data_frame(ls_0601, directed = FALSE)
+
+#merge graphs
+#merged_total_network <- union(g0302, g0312, g0505, g0601)
+#summary(merged_total_network)
+
+```
+
+
+```{r book_subgraph}
+# as seen above, graph is undirected
+#calculate degree centrality for whole network and store as df
+deg_total_network <- degree(merged_total_network)
+deg_total_df <- data.frame(vertex_id = as.numeric(as_ids(V(merged_total_network))), degree = deg_total_network)
+
+#subset out 'books' 
+deg_total_df <- deg_total_df %>% left_join(book_data[,c("id", "salesrank")], 
+                                           by = c("vertex_id" = "id")) %>% unique() %>% na.omit()
+
+# create subgraph of books
+node_fltr <- V(merged_total_network)[V(merged_total_network) %>% as_ids() %in% deg_total_df$vertex_id]
+book_subgraph <- induced_subgraph(merged_total_network, node_fltr)
+summary(book_subgraph)
+```
+
+
+```{r node_attributes}
+deg_total_df <-deg_total_df %>% 
+  mutate(degree_bin = cut(.$degree, breaks = 10, labels = FALSE)) %>% 
+  mutate(salesrank_bin = cut(.$salesrank, breaks = 4, labels = FALSE))
+
+# sample 10% of entire book subgraph
+book_sampled_df <- deg_total_df %>% 
+  group_by(degree_bin, salesrank_bin) %>% 
+  sample_frac(0.1, replace=FALSE) %>% 
+  ungroup()
+
+book_sampled_subgraph <- induced_subgraph(book_subgraph, V(book_subgraph)[as_ids(V(book_subgraph)) %in% row.names(book_sampled_df)])
+## There is an issue here. The df has 29k rows which is exactly 10%. However, the subgraph has 21k nodes.
+
+# sampled subgraph graph attributes
+sampled_transitivity <- transitivity(book_sampled_subgraph, type="global")
+sampled_density <- graph.density(book_sampled_subgraph)
+sampled_closeness <- closeness(book_sampled_subgraph)
+sampled_betweenness <- betweenness(book_sampled_subgraph)
+
+#adding to the dataframe
+book_sampled_df$closeness <- sampled_closeness
+book_sampled_df$betweenness <- sampled_betweenness
+
+
+# print(summary(book_sampled_subgraph))
+message(paste("Global transitivity for sampled subgraph is", sampled_transitivity, "and density is", sampled_density))
+```
+
+```{r graph-attributes}
+global_transitivity = transitivity(book_subgraph, type="global")
+density = graph.density(book_subgraph)
+message(paste("Global transitivity is", global_transitivity, "and density is", density))
+```
+
+**2.1. Degree Centrality**
+
+In the context of our project, degree represents the number of other books which a given book is co-purchased with - books with high degree centrality are frequently purchased together with other books. From the graphs, we can see that the network's degree distribution follows the power-law, which is a characteristic of a naturally-occurring graph; most books have low in-degree and only a small number of them have high in-degree. the distribution is extremely left-skewed and we have to use a log scale to properly visualize them. To the extreme right, we can see that a small number of books are extremely popular and are co-purchased with more than 1500 other books. 
+
+```{r deg_visualization, fig.width=15, fig.height=5}
+#function to plot histogram
+plot_hist <- function(g, title, x_label, y_label, log_scale = TRUE) {
+  ls <- scale_y_continuous(trans = "log10")
+  labels <- labs(y = y_label, x = x_label, title = title)  # Added title parameter
+  graph <- ggplot() + geom_histogram(aes(x = g), bins = 100) + labels
+  
+  if (log_scale == TRUE) {
+    return(graph + ls)
+  } else {
+    return(graph)
+  }
+}
+
+#calculate degree centrality for each graph
+deg_0302 <- degree(g0302, mode = "in")
+deg_0312 <- degree(g0312, mode = "in")
+deg_0505 <- degree(g0505, mode = "in")
+deg_0601 <- degree(g0601, mode = "in")
+
+deg_hist0302 <- plot_hist(deg_0302, "in-degree distribution for 0302", "in-degree", "frequency (log scale)")
+deg_hist0312 <- plot_hist(deg_0312, "in-degree distribution for 0312", "in-degree", "frequency (log scale)")
+deg_hist0505 <- plot_hist(deg_0505, "in-degree distribution for 0505", "in-degree", "frequency (log scale)")
+deg_hist0601 <- plot_hist(deg_0601, "in-degree distribution for 0601", "in-degree", "frequency (log scale)")
+
+grid.arrange(deg_hist0302, deg_hist0312, deg_hist0505, deg_hist0601, ncol = 2)
+```
+
+
+```{r sampling, fig.width = 15, fig.height = 10}
+df_deg_0302 %>% left_join(book_data[, c("id", "salesrank")], by = c("deg_0302" = "id"))
+
+df_deg_0302<- as.data.frame(deg_0302) %>%mutate(bin = cut(.$deg_0302, breaks = 100, labels = FALSE))
+
+sampled_df <- df_deg_0302 %>%
+  group_by(bin) %>%
+  sample_frac(0.0005, replace = FALSE) %>%
+  ungroup()
+
+#get subgraph from sampled vertices
+subg <- induced_subgraph(g0302, V(g0302)[as_ids(V(g0302)) %in% row.names(sampled_df)])
+
+#get largest component
+comps <- clusters(subg)
+largest_comp_ind <- which.max(comps$csize)
+largest_comp_vert <- which(comps$membership == largest_comp_ind)
+largest_comp_subg <- induced_subgraph(subg, largest_comp_vert)
+
+#visualize largest component
+plot(largest_comp_subg, layout = layout.fruchterman.reingold(subg), vertex.size = degree(largest_comp_subg))
+#degree distribution for sampled graph
+plot_hist(degree(subg), "Degree Centrality distribution for sampled graph", "degree centrality", "frequency", log_scale = FALSE)
+#degree distribution for largest component
+plot_hist(degree(largest_comp_subg), "Degree Centrality distribution for largest component", "degree centrality", "frequency", log_scale = FALSE)
+```
+
+
+
+
+
+
+
+
+
