@@ -165,7 +165,6 @@ colnames(encoded_data) <- main_genres
 item_index_books <- cbind(item_index_books, encoded_data)
 
 
-
 #save csv
 write.csv(item_index_books, "item_index_books.csv", row.names = FALSE)
 
