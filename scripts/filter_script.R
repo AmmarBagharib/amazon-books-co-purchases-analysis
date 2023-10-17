@@ -1,4 +1,3 @@
-library(tidyr)
 library(igraph)
 library(data.table)
 library(here)

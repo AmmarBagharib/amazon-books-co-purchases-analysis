@@ -85,6 +85,7 @@ plot_hist(deg, "in-degree distribution for 0302", "in-degree", "frequency (log s
 
 ```
 
+# Clusters
 
 ```{r component, fig.width = 15, fig.height = 10}
 
@@ -101,6 +102,19 @@ plot_hist(degree(g), "Degree Centrality distribution for sampled graph", "degree
 #degree distribution for largest component
 plot_hist(degree(largest_comp_subg), "Degree Centrality distribution for largest component", "degree centrality", "frequency", log_scale = FALSE)
 ```
+
+
+# Clustering
+
+Source Codes
+
+https://cran.r-project.org/web/packages/linkprediction/linkprediction.pdf
+
+https://rpubs.com/writetosamadalvi/CommunityDetection
+
+https://users.dimi.uniud.it/~massimo.franceschet/R/communities.html
+
+https://rstudio-pubs-static.s3.amazonaws.com/734940_93adb495f0e34ca291fcda1d214129d1.html#Service_as_a_Freelancer
 
 
 
