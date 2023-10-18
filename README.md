@@ -68,26 +68,6 @@ Once done, run:
 usethis::use_git()
 ```
 
-## Git LFS
-As our graph network files are very large, we shouldn't be pushing it onto GitHub everytime we work on our project as it will exceed the size limit.
-
-### Downloading Git LFS
-Visit (https://git-lfs.com/) and download git lfs it onto your device.
-
-### Installing Git LFS on Command Line
-Download and install the Git command line extension. Once downloaded and installed, set up Git LFS for your user account by running:
-```
-git lfs install
-```
-
-In your Terminal/ Windows Prompt, navigate to the project folder as shown in **Step 3** above.
-
-Run:
-```
-git lfs track "*.txt.gz"
-```
-**NOTE**: You only need to do this step **once**.
-
 ## Working with Git
 
 1. Every time you want to start working on the project, navigate to `amazon_graph_analysis` file path on your computer and open `amazon_graph_analysis.Rproj`
