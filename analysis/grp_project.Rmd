@@ -51,7 +51,18 @@ head(books_df)
 
 ```{r node_attributes}
 
-# to fill
+# store attributes into a data.frame
+node_attributes_df=data.frame(vertex_id=V(g)$name, 
+                              degree=degree(g), # adding the vertex level attributes
+                              closeness=closeness(g, mode='all'),
+                              betweenness=betweenness(g, directed=FALSE),
+                              transitivity=transitivity(g,type="localundirected"), # There are many NaN transitivity values; it means these nodes are isolated?
+                              eigen_centrality = eigen_centrality(g)$vector,
+                              page_rank = page_rank(g)$vector,
+                              component_membership = components(g)$membership) #should we specify weakly or strongly connected component?
+
+
+head(node_attributes_df)
 ```
 
 ```{r graph-attributes}
