@@ -40,6 +40,8 @@ set.seed(123)
 g <- read_graph(here("outputs/filtered_graph.graphml"), format = "graphml")
 # read filtered book data
 books_df <- read.csv(here("outputs/book_filtered.csv"))
+# changing id column from 'int' to 'chr' dtype
+books_df$id <- as.character(books_df$id)
 
 g
 
@@ -65,10 +67,16 @@ node_attributes_df=data.frame(vertex_id=V(g)$name,
 head(node_attributes_df)
 ```
 
+```{r merging_node_attributes_books_df}
+merged_df = books_df %>% left_join(node_attributes_df, by = c("id" = "vertex_id"))
+head(merged_df)
+```
+
+
 ```{r graph-attributes}
 global_transitivity = transitivity(g, type="global")
 density = graph.density(g)
-message(paste("Global transitivity is", global_transitivity, "and density is", density))
+print(paste("The global transitivity of the graph is", global_transitivity, "and the graph density is", density))
 ```
 
 **2.1. Degree Centrality**
