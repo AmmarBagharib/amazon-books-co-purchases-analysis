@@ -37,9 +37,9 @@ In doing so, we anticipate that our efforts will yield a mutually beneficial out
 set.seed(123)
 
 # Read the graph from the GraphML file
-g <- read_graph(here("outputs/filtered_graph.graphml"), format = "graphml")
+g <- read_graph("../outputs/filtered_graph.graphml", format = "graphml")
 # read filtered book data
-books_df <- read.csv(here("outputs/book_filtered.csv"))
+books_df <- read.csv("../outputs/book_filtered.csv")
 # changing id column from 'int' to 'chr' dtype
 books_df$id <- as.character(books_df$id)
 
@@ -54,11 +54,9 @@ head(books_df)
 
 # store attributes into a data.frame
 node_attributes_df=data.frame(vertex_id=V(g)$name, 
-                              degree = degree(g, mode = "all"),
-                              in_degree=degree(g, mode = "in"), # adding the vertex level attributes
-                              out_degree = degree(g, mode = "out"),
+                              degree = degree(g),
                               closeness=closeness(g, mode='all'),
-                              betweenness=betweenness(g, directed=TRUE),
+                              betweenness=betweenness(g, directed=FALSE),
                               transitivity=transitivity(g, type = "local"), # There are many NaN transitivity values; it means these nodes are isolated?
                               eigen_centrality = eigen_centrality(g)$vector,
                               page_rank = page_rank(g)$vector,
@@ -75,11 +73,9 @@ head(merged_df)
 
 **2.1. Degree Centrality**
 
-In our directed graph, out-degree represents the number of books that the focal book is co-purchased with, indicating the tendency of a given book to be purchased together with other books. On the other hand, in-degree represents the number of books that are co-purchased with the focal book, meaning it shows how many other books are influenced by the purchase of the focal book. In short, books with high out-degree centrality are frequently co-purchased with other books, suggesting that they are influenced by a wide range of other books, while books with high in-degree centrality are often the ones that influence the purchase of other books.
+The degree distribution of our network exhibits a power-law distribution, a characteristic often seen in naturally occurring networks. Majority of books in our network have low degree centrality, typically three or fewer connections. On the far right of the distribution, we observe a small group of books with 12 or more first-degree connections, indicating a significant influence on the purchase of other books.
 
-From the graphs, we can see that the network's degree distribution follows the power-law, which is a characteristic of naturally-occurring graphs; most books have low degree centrality of 3 and below. In-degree distribution looks very similar to that of all-degree, with most books having 3 or fewer in-bound links. To the most extreme right, there are a small number of books with 12 in-bound links, indicating that they have a very high degree of influence on the purchase of other books. On the other hand, out-degree distribution is much more left-skewed than in-degree, with most books having either 0 or 1 out-bound links. In the most extreme cases, a small number of books have 3 outbound-links. 
-
-In conclusion, low in-degree, along with the low out-degree, suggests that most books in the network are not strongly influencing the purchase of other products, nor are they strongly influenced by other products. However, we can investigate the outliers with high in-degree centrality to better understand how we can formulate cross-selling strategies to improve co-purchase tendencies.
+This suggests that most books within the network neither strongly influence the purchase of other books nor are significantly influenced by other books. Examining these high in-degree centrality outliers can provide valuable insights, which could allow us to formulate effective cross-selling strategies that enhance co-purchase tendencies.
 
 ```{r deg_visualization, fig.width=15, fig.height=5}
 #function to plot histogram
@@ -95,25 +91,20 @@ plot_hist <- function(g, title, x_label, y_label, log_scale = FALSE) {
 }
 
 #calculate in, out and all degree centrality for each graph
-deg <- degree(g, mode = "all")
-deg_in <- degree(g, mode = "all")
-deg_out <- degree(g, mode = "out")
+deg <- degree(g)
 
 #visualize
-all_deg <- plot_hist(deg, "degree distribution for 0302", "degree", "frequency")
-in_deg <- plot_hist(deg_in, "in-degree distribution for 0302", "degree", "frequency")
-out_deg <-plot_hist(deg_out, "out-degree distribution for 0302", "degree", "frequency")
-grid.arrange(all_deg, in_deg, out_deg, ncol = 3)
+plot_hist(deg, "degree distribution for 0302", "degree", "frequency")
 ```
 
 **2.2. Degree Centrality**
-The low network density of 0.000299 in the network indicates that, relative to the total possible connections between books, there are very few actual co-purchases. This suggests that the network is quite sparse, with a limited number of co-purchases taking place.
+The low network density of 0.000598 in the network indicates that, relative to the total possible connections between books, there are very few actual co-purchases. This suggests that the network is quite sparse, with a limited number of co-purchases taking place.
 
 Global transitivity measures how likely the neighbors of two connected nodes are connected to each other. In the case of our co-purchase network, it measures the likelihood that the alters of two books which are co-purchased together are also co-purchased with each other. The moderate global transitivity value of 0.242 tells us that there is a noteworthy degree of clustering or transitivity within this sparse network. 
 
 This means that, despite the overall sparsity, there is a tendency for co-purchased books to have shared co-purchases with other books in the network. In simpler terms, when two books are co-purchased together, there is a relatively higher likelihood that other books co-purchased with those two are also co-purchased with each other. 
 
-In summary, it suggests that there are distinct co-purchase patterns or niche markets within the network. Products within these clusters frequently co-purchase with each other, even if the overall network is not densely interconnected.
+This suggests that there are distinct co-purchase patterns or niche markets within the network. Products within these clusters frequently co-purchase with each other, even if the overall network is not densely interconnected.
 
 ```{r graph-attributes}
 global_transitivity = transitivity(g, type="global")

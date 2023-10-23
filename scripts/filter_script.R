@@ -1,9 +1,10 @@
 library(igraph)
 library(data.table)
 library(here)
-
+library(dplyr)
+setwd(here())
 # date collected for book_data was in Summer 2006. We take the median date which is 7th August 2006
-book_data <- data.table(distinct(read.csv("../data/item_index_books.csv")))
+book_data <- data.table(distinct(read.csv("./data/item_index_books.csv")))
 
 # Split the 'cleaned_genres' column by '|' and extract the first genre
 book_data[, first_genre := sub("\\|.*", "", cleaned_genres)]
@@ -16,7 +17,7 @@ head(book_data)
 # filter for books with average of > 1 review per month
 
 # date collected for ls_0302 was in 03 March 2003
-ls_0302 <- read.table('../data/Amazon0302.txt')
+ls_0302 <- read.table('./data/Amazon0302.txt')
 g0302 <- graph_from_data_frame(ls_0302, directed = FALSE)
 
 g_df <- as_long_data_frame(g0302) %>% select(-c("from_name", "to_name"))
@@ -59,7 +60,7 @@ vertex_names <- unique(c(result_df$from, result_df$to))
 # filtered book_data
 book_filtered <- book_data %>% filter(id %in% vertex_names)
 
-write.csv(book_filtered, here("outputs/book_filtered.csv"), row.names=FALSE)
+write.csv(book_filtered, "./outputs/book_filtered.csv", row.names=FALSE)
 
 # Create an igraph object
 g <- graph_from_data_frame(result_df[, c("from", "to")], directed=FALSE)
@@ -94,5 +95,5 @@ V(g)$book2_salesrank <- vertex_data$book2_salesrank
 g
 
 # Export the igraph object to a GraphML file
-write_graph(g, here("outputs/filtered_graph.graphml"), format = "graphml")
+write_graph(g, "./outputs/filtered_graph.graphml", format = "graphml")
 
