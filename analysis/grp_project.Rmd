@@ -33,13 +33,23 @@ In doing so, we anticipate that our efforts will yield a mutually beneficial out
 
 **1. Network Characteristics**
 
+Note:
+
+On our end, the metadata is collected in summer 2006 (possible dates is Wed, 21 Jun 2006 – Sat, 23 Sept 2006), and our co-purchase data: `amazon0312` was collected in March 02 2003.
+
+The number of months from the midpoint of summer, 7 August 2006, to March 02 2003 is 30 months 3 weeks, thus we round up to 31 months.
+
+we've filtered for such book-to-book co-purchases:
+1. With average reviews > 1 in 31 month period (for both books)
+2. in a co-purchase, both books have a valid genre i.e., not an empty string
+
 ```{r read_data}
 set.seed(123)
 
 # Read the graph from the GraphML file
-g <- read_graph("../outputs/filtered_graph.graphml", format = "graphml")
+g <- read_graph(here("outputs/filtered_graph.graphml"), format = "graphml")
 # read filtered book data
-books_df <- read.csv("../outputs/book_filtered.csv")
+books_df <- read.csv(here("outputs/book_filtered.csv"))
 # changing id column from 'int' to 'chr' dtype
 books_df$id <- as.character(books_df$id)
 
