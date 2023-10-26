@@ -58,65 +58,108 @@ g
 head(books_df)
 ```
 
+The code cells that are commented out were used to generated the baseline dataset.
 ```{r combinations}
-#generate combinations
-sample_nodes <- V(g) %>% as_ids()
-combinations <- combn(sample_nodes, 2, simplify = TRUE)
-
-combi <- combinations[,1]
-combi
-
-#function to check if a given pair of nodes are connected in a given graph
-check_connection <- function(combi) {
-  result <- are.connected(g, combi[1], combi[2])
-  return(result)
-}
-
-#check if each pair of nodes are connected
-is_connected <- combinations %>% apply(., 2, check_connection)
-
-df_edgelist = data.frame(V1 = combinations[1,], V2 = combinations[2,], is_connected = is_connected)
+# #generate combinations
+# sample_nodes <- V(g) %>% as_ids()
+# combinations <- combn(sample_nodes, 2, simplify = TRUE)
+# 
+# combi <- combinations[,1]
+# combi
+# 
+# #function to check if a given pair of nodes are connected in a given graph
+# check_connection <- function(combi) {
+#   result <- are.connected(g, combi[1], combi[2])
+#   return(result)
+# }
+# 
+# #check if each pair of nodes are connected
+# is_connected <- combinations %>% apply(., 2, check_connection)
+# 
+# df_edgelist = data.frame(V1 = combinations[1,], V2 = combinations[2,], is_connected = is_connected)
 ```
 
 ```{r combining_edgelist_with_data}
-df_edgelist_book <- df_edgelist %>% left_join(books_df %>% select(id, length, rating, reviews, salesrank) %>% rename(V1_length = length, V1_rating = rating, V1_reviews = reviews, V1_salesrank = salesrank), by  = c("V1" = "id")) %>% left_join(books_df %>% select(id, length, rating, reviews, salesrank) %>% rename(V2_length = length, V2_rating = rating, V2_reviews = reviews, V2_salesrank = salesrank), by  = c("V2" = "id"))
-
-df_edgelist_book
+# df_edgelist_book <- df_edgelist %>% left_join(books_df %>% select(id, length, rating, reviews, salesrank) %>% rename(V1_length = length, V1_rating = rating, V1_reviews = reviews, V1_salesrank = salesrank), by  = c("V1" = "id")) %>% left_join(books_df %>% select(id, length, rating, reviews, salesrank) %>% rename(V2_length = length, V2_rating = rating, V2_reviews = reviews, V2_salesrank = salesrank), by  = c("V2" = "id"))
 ```
 
 ```{r aggreating_number_common_genres}
-
-# First, split the genres for each unique node
-node_genres <- books_df %>%
-  select(id, cleaned_genres) %>%
-  distinct() %>%
-  mutate(genres_list = strsplit(cleaned_genres, "\\|"))
-
-# Create a named list for fast lookup
-genre_list <- setNames(node_genres$genres_list, node_genres$id)
-
-# Compute the number of common genres for each row in edgelist
-df_edgelist_book$num_common_genre <- mapply(function(v1, v2) {
-  length(intersect(genre_list[[as.character(v1)]], genre_list[[as.character(v2)]]))
-}, df_edgelist_book$V1, df_edgelist_book$V2)
-
-# converting dependent variable, is_connected to binary variable
-df_edgelist_book$is_connected <- df_edgelist_book$is_connected * 1
-
-#save csv
-write.csv(df_edgelist_book, "baseline_dataset.csv", row.names = FALSE)
+# 
+# # First, split the genres for each unique node
+# node_genres <- books_df %>%
+#   select(id, cleaned_genres) %>%
+#   distinct() %>%
+#   mutate(genres_list = strsplit(cleaned_genres, "\\|"))
+# 
+# # Create a named list for fast lookup
+# genre_list <- setNames(node_genres$genres_list, node_genres$id)
+# 
+# # Compute the number of common genres for each row in edgelist
+# df_edgelist_book$num_common_genre <- mapply(function(v1, v2) {
+#   length(intersect(genre_list[[as.character(v1)]], genre_list[[as.character(v2)]]))
+# }, df_edgelist_book$V1, df_edgelist_book$V2)
+# 
+# # converting dependent variable, is_connected to binary variable
+# df_edgelist_book$is_connected <- df_edgelist_book$is_connected * 1
+# 
+# #save csv
+# write.csv(df_edgelist_book, "baseline_dataset.csv", row.names = FALSE)
 ```
 
 
 ```{r analysing_baseline_dataset}
+baseline_df <- read.csv('baseline_dataset.csv')
 class_proportions <- df_edgelist_book %>% group_by(is_connected) %>% tally()
 print(class_proportions)
 # The dataset is highly imbalanced and this needs to be handled as if it is not dealt with properly, the algorithm will not be able to learn the characteristics of the minority class properly. Therefore, up-sampling or down-sampling techniques can be used to ensure equal or more balanced proportions between the two classes.
+
+# Idea: Bin salesrank into 10 bins (?) and create into a categorical variable
+
+
+# Code to split into training and test data
+install.packages("caret")
+library(caret)
+
+set.seed(123)  
+# Train test split
+index <- createDataPartition(baseline_df$is_connected, p = 0.7, list = FALSE)
+train_data <- baseline_df[index, ]
+test_data <- baseline_df[-index, ]
+
+# downsampling of the majority class for TRAIN set only. Cannot touch TEST set.
+downsampled_data <- downSample(train_data[train_data$is_connected == TRUE, ], 
+                               train_data[train_data$is_connected == FALSE, ], 
+                               yname = "is_connected", 
+                               list = FALSE,
+                               p = 0.3)
+
+# Combine the downsampled data
+train_data <- rbind(downsampled_data, train_data[train_data$is_connected == TRUE,][seq_len(nrow(downsampled_data) * 0.7), ])
 ```
 
 ```{r creating_baseline_model}
+# First create a baseline model: Logistic regression. It is chosen for its simplicity and easy interpretability. Come up with a baseline model first without any feature selection or hyperparameter tuning first and see performance.
+logistic_model <- glm(is_connected ~ ., data = train_data, family = binomial(link = "logit"))
 
+# Summary of the model
+summary(logistic_model)
+```
 
+```{r baseline_model_performance}
+# predictions
+predicted_probs <- predict(logistic_model, newdata = test_data, type = "response")
+threshold <- 0.5
+predicted_classes <- ifelse(predicted_probs > threshold, 1, 0)
+
+# Confusion matrix
+confusion <- confusionMatrix(as.factor(predicted_classes), as.factor(test_data$is_connected))
+print(confusion)
+
+library(pROC)
+# ROC curve and AUC
+roc_obj <- roc(test_data$is_connected, predicted_probs)
+auc(roc_obj)
+plot(roc_obj, main="ROC curve", col="blue", lwd=2)
 
 ```
 
