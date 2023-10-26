@@ -50,7 +50,7 @@ set.seed(123)
 g <- read_graph(here("outputs/filtered_graph.graphml"), format = "graphml")
 # read filtered book data
 books_df <- read.csv(here("outputs/book_filtered.csv"))
-# changing id column from 'int' to 'chr' dtype
+# changing id column and vertex ids from 'int' to 'chr' dtype
 books_df$id <- as.character(books_df$id)
 
 g
@@ -58,6 +58,67 @@ g
 head(books_df)
 ```
 
+```{r combinations}
+#generate combinations
+sample_nodes <- V(g) %>% as_ids()
+combinations <- combn(sample_nodes, 2, simplify = TRUE)
+
+combi <- combinations[,1]
+combi
+
+#function to check if a given pair of nodes are connected in a given graph
+check_connection <- function(combi) {
+  result <- are.connected(g, combi[1], combi[2])
+  return(result)
+}
+
+#check if each pair of nodes are connected
+is_connected <- combinations %>% apply(., 2, check_connection)
+
+df_edgelist = data.frame(V1 = combinations[1,], V2 = combinations[2,], is_connected = is_connected)
+```
+
+```{r combining_edgelist_with_data}
+df_edgelist_book <- df_edgelist %>% left_join(books_df %>% select(id, length, rating, reviews, salesrank) %>% rename(V1_length = length, V1_rating = rating, V1_reviews = reviews, V1_salesrank = salesrank), by  = c("V1" = "id")) %>% left_join(books_df %>% select(id, length, rating, reviews, salesrank) %>% rename(V2_length = length, V2_rating = rating, V2_reviews = reviews, V2_salesrank = salesrank), by  = c("V2" = "id"))
+
+df_edgelist_book
+```
+
+```{r aggreating_number_common_genres}
+
+# First, split the genres for each unique node
+node_genres <- books_df %>%
+  select(id, cleaned_genres) %>%
+  distinct() %>%
+  mutate(genres_list = strsplit(cleaned_genres, "\\|"))
+
+# Create a named list for fast lookup
+genre_list <- setNames(node_genres$genres_list, node_genres$id)
+
+# Compute the number of common genres for each row in edgelist
+df_edgelist_book$num_common_genre <- mapply(function(v1, v2) {
+  length(intersect(genre_list[[as.character(v1)]], genre_list[[as.character(v2)]]))
+}, df_edgelist_book$V1, df_edgelist_book$V2)
+
+# converting dependent variable, is_connected to binary variable
+df_edgelist_book$is_connected <- df_edgelist_book$is_connected * 1
+
+#save csv
+write.csv(df_edgelist_book, "baseline_dataset.csv", row.names = FALSE)
+```
+
+
+```{r analysing_baseline_dataset}
+class_proportions <- df_edgelist_book %>% group_by(is_connected) %>% tally()
+print(class_proportions)
+# The dataset is highly imbalanced and this needs to be handled as if it is not dealt with properly, the algorithm will not be able to learn the characteristics of the minority class properly. Therefore, up-sampling or down-sampling techniques can be used to ensure equal or more balanced proportions between the two classes.
+```
+
+```{r creating_baseline_model}
+
+
+
+```
 
 
 ```{r node_attributes}
