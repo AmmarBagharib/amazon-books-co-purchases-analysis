@@ -16,6 +16,8 @@ library(gridExtra)
 library(ggplot2)
 library(stringr)
 library(here)
+library(caret)
+library(pROC)
 ```
 
 ```{r , setup, include=FALSE}
@@ -109,7 +111,7 @@ The code cells that are commented out were used to generated the baseline datase
 
 ```{r analysing_baseline_dataset}
 baseline_df <- read.csv('baseline_dataset.csv')
-class_proportions <- df_edgelist_book %>% group_by(is_connected) %>% tally()
+class_proportions <- baseline_df %>% group_by(is_connected) %>% tally()
 print(class_proportions)
 # The dataset is highly imbalanced and this needs to be handled as if it is not dealt with properly, the algorithm will not be able to learn the characteristics of the minority class properly. Therefore, up-sampling or down-sampling techniques can be used to ensure equal or more balanced proportions between the two classes.
 
@@ -117,37 +119,39 @@ print(class_proportions)
 
 
 # Code to split into training and test data
-install.packages("caret")
-library(caret)
-
 set.seed(123)  
-# Train test split
+# This function ensures automatically that class proportions are maintained
 index <- createDataPartition(baseline_df$is_connected, p = 0.7, list = FALSE)
 train_data <- baseline_df[index, ]
 test_data <- baseline_df[-index, ]
 
-# downsampling of the majority class for TRAIN set only. Cannot touch TEST set.
-downsampled_data <- downSample(train_data[train_data$is_connected == TRUE, ], 
-                               train_data[train_data$is_connected == FALSE, ], 
-                               yname = "is_connected", 
-                               list = FALSE,
-                               p = 0.3)
+# converting dependent variable to factor as many packages require to be in factor
+train_data$is_connected <- as.factor(train_data$is_connected)
+test_data$is_connected <- as.factor(test_data$is_connected)
 
-# Combine the downsampled data
-train_data <- rbind(downsampled_data, train_data[train_data$is_connected == TRUE,][seq_len(nrow(downsampled_data) * 0.7), ])
+print(paste("Number of positive class in train data:", sum(train_data$is_connected == 1)))
+
+# downsampling of the majority class for TRAIN set only. Cannot touch TEST set.
+downsampled_data <- downSample(train_data[, -which(names(train_data) == "is_connected")], train_data$is_connected)
+
+# need to rename the "is_connected" column
+colnames(downsampled_data)[colnames(downsampled_data) == "Class"] <- "is_connected"
+
+print(paste("Number of positive class in downsampled data:", sum(downsampled_data$is_connected == 1)))
+print(paste("Number of negative class in downsampled data:", sum(downsampled_data$is_connected == 0)))
 ```
 
 ```{r creating_baseline_model}
 # First create a baseline model: Logistic regression. It is chosen for its simplicity and easy interpretability. Come up with a baseline model first without any feature selection or hyperparameter tuning first and see performance.
-logistic_model <- glm(is_connected ~ ., data = train_data, family = binomial(link = "logit"))
+baseline_logit_model <- glm(is_connected ~ ., data = downsampled_data, family = binomial(link = "logit"))
 
 # Summary of the model
-summary(logistic_model)
+summary(baseline_logit_model)
 ```
 
 ```{r baseline_model_performance}
 # predictions
-predicted_probs <- predict(logistic_model, newdata = test_data, type = "response")
+predicted_probs <- predict(baseline_logit_model, newdata = test_data, type = "response")
 threshold <- 0.5
 predicted_classes <- ifelse(predicted_probs > threshold, 1, 0)
 
