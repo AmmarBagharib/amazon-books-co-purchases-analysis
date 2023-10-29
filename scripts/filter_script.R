@@ -2,9 +2,16 @@ library(igraph)
 library(data.table)
 library(here)
 library(dplyr)
+library(caret)
+library(pROC)
 setwd(here())
+
+########################################################################
+########################################################################
+# Create book dataframe
+
 # date collected for book_data was in Summer 2006. We take the median date which is 7th August 2006
-book_data <- data.table(distinct(read.csv("./data/item_index_books.csv")))
+book_data <- data.table(distinct(read.csv("../data/item_index_books.csv")))
 
 # Split the 'cleaned_genres' column by '|' and extract the first genre
 book_data[, first_genre := sub("\\|.*", "", cleaned_genres)]
@@ -17,7 +24,7 @@ head(book_data)
 # filter for books with average of > 1 review per month
 
 # date collected for ls_0302 was in 03 March 2003
-ls_0302 <- read.table('./data/Amazon0302.txt')
+ls_0302 <- read.table('../data/Amazon0302.txt')
 g0302 <- graph_from_data_frame(ls_0302, directed = FALSE)
 
 g_df <- as_long_data_frame(g0302) %>% select(-c("from_name", "to_name"))
@@ -52,15 +59,22 @@ result_df <- inner_join(g_df, book_attributes, by = c("from" = "id")) %>%
   filter((from_reviews/31) > 1, (to_reviews/31) > 1)
 
 
-result_df
+#result_df
 
 # Extract unique vertex names
 vertex_names <- unique(c(result_df$from, result_df$to))
 
 # filtered book_data
-book_filtered <- book_data %>% filter(id %in% vertex_names)
+book_filtered <- book_data %>% 
+  filter(id %in% vertex_names) %>%
+  select(id, cleaned_genres, rating, reviews, salesrank, first_genre)
 
-write.csv(book_filtered, "./outputs/book_filtered.csv", row.names=FALSE)
+write.csv(book_filtered, here("outputs/book_filtered.csv"), row.names=FALSE)
+
+
+########################################################################
+########################################################################
+# Create graph
 
 # Create an igraph object
 g <- graph_from_data_frame(result_df[, c("from", "to")], directed=FALSE)
@@ -92,8 +106,74 @@ V(g)$book2_reviews <- vertex_data$book2_reviews
 V(g)$book1_salesrank <- vertex_data$book1_salesrank
 V(g)$book2_salesrank <- vertex_data$book2_salesrank
 
-g
+#g
 
 # Export the igraph object to a GraphML file
-write_graph(g, "./outputs/filtered_graph.graphml", format = "graphml")
+write_graph(g, here("outputs/filtered_graph.graphml"), format = "graphml")
+
+
+########################################################################
+########################################################################
+# Check combinations of links
+
+
+# combinations
+#generate combinations
+sample_nodes <- V(g) %>% as_ids()
+combinations <- combn(sample_nodes, 2, simplify = TRUE)
+
+combi <- combinations[,1]
+
+#function to check if a given pair of nodes are connected in a given graph
+check_connection <- function(combi) {
+  result <- are.connected(g, combi[1], combi[2])
+  return(result)
+}
+
+#check if each pair of nodes are connected
+is_connected <- combinations %>% apply(., 2, check_connection)
+
+df_edgelist = data.frame(V1 = as.numeric(combinations[1,]), 
+                         V2 = as.numeric(combinations[2,]), 
+                         is_connected = is_connected)
+
+# combining_edgelist_with_data
+df_edgelist_book <- df_edgelist %>% 
+  left_join(book_filtered %>% 
+              select(id, rating, reviews, salesrank) %>% 
+              rename(V1_rating = rating, V1_reviews = reviews, V1_salesrank = salesrank), 
+            by  = c("V1" = "id")) %>% 
+  left_join(book_filtered %>% 
+              select(id, rating, reviews, salesrank) %>% 
+              rename(V2_rating = rating, V2_reviews = reviews, V2_salesrank = salesrank), 
+            by  = c("V2" = "id"))
+
+########################################################################
+########################################################################
+# aggregating_number_common_genres
+
+# First, extract unique list of main genres from books. Main genres are defined to be the first genre for each book
+main_genres <- book_filtered %>%
+  select(first_genre) %>%
+  distinct() %>% pull()
+
+# # First, split the genres for each unique node
+node_genres <- book_filtered %>%
+  select(id, cleaned_genres) %>%
+  distinct() %>%
+  mutate(genres_list = strsplit(cleaned_genres, "\\|"))
+
+# Create a named list for fast lookup
+genre_list <- setNames(node_genres$genres_list, node_genres$id)
+
+# Compute the number of common genres for each row in edgelist
+df_edgelist_book$num_common_genre <- mapply(function(v1, v2) {
+  length(intersect(genre_list[[as.character(v1)]], genre_list[[as.character(v2)]]))
+}, df_edgelist_book$V1, df_edgelist_book$V2)
+#
+# converting dependent variable, is_connected to binary variable
+df_edgelist_book$is_connected <- df_edgelist_book$is_connected * 1
+#
+#save csv
+write.csv(df_edgelist_book, here("outputs/baseline_dataset.csv"), row.names = FALSE)
 
