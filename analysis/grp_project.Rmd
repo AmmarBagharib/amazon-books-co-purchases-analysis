@@ -110,7 +110,7 @@ The code cells that are commented out were used to generated the baseline datase
 
 
 ```{r analysing_baseline_dataset}
-baseline_df <- read.csv('baseline_dataset.csv')
+baseline_df <- read.csv(here('outputs/baseline_dataset.csv'))
 class_proportions <- baseline_df %>% group_by(is_connected) %>% tally()
 print(class_proportions)
 # The dataset is highly imbalanced and this needs to be handled as if it is not dealt with properly, the algorithm will not be able to learn the characteristics of the minority class properly. Therefore, up-sampling or down-sampling techniques can be used to ensure equal or more balanced proportions between the two classes.
@@ -142,9 +142,6 @@ print(paste("Number of negative class in downsampled data:", sum(downsampled_dat
 ```
 ```{r}
 head(downsampled_data)
-
-
-
 ```
 ```{r creating_baseline_model}
 # First create a baseline model: Logistic regression. It is chosen for its simplicity and easy interpretability. Come up with a baseline model first without any feature selection or hyperparameter tuning first and see performance.

@@ -69,6 +69,21 @@ book_filtered <- book_data %>%
   filter(id %in% vertex_names) %>%
   select(id, cleaned_genres, rating, reviews, salesrank, first_genre)
 
+# First, extract unique list of main genres from books. Main genres are defined to be the first genre for each book
+main_genres <- book_filtered %>%
+  select(first_genre) %>%
+  distinct() %>% pull()
+
+# Function to count common main genres
+count_common_main_genres <- function(genre_string) {
+  genres <- unlist(strsplit(genre_string, "\\|"))
+  common_genres <- genres[genres %in% main_genres]
+  return(length(common_genres))
+}
+
+# Apply the function to each row of the dataframe
+book_filtered$num_main_genres <- sapply(book_filtered$cleaned_genres, count_common_main_genres)
+
 write.csv(book_filtered, here("outputs/book_filtered.csv"), row.names=FALSE)
 
 
@@ -137,27 +152,11 @@ df_edgelist = data.frame(V1 = as.numeric(combinations[1,]),
                          V2 = as.numeric(combinations[2,]), 
                          is_connected = is_connected)
 
-# combining_edgelist_with_data
-df_edgelist_book <- df_edgelist %>% 
-  left_join(book_filtered %>% 
-              select(id, rating, reviews, salesrank) %>% 
-              rename(V1_rating = rating, V1_reviews = reviews, V1_salesrank = salesrank), 
-            by  = c("V1" = "id")) %>% 
-  left_join(book_filtered %>% 
-              select(id, rating, reviews, salesrank) %>% 
-              rename(V2_rating = rating, V2_reviews = reviews, V2_salesrank = salesrank), 
-            by  = c("V2" = "id"))
 
 ########################################################################
 ########################################################################
 # aggregating_number_common_genres
-
-# First, extract unique list of main genres from books. Main genres are defined to be the first genre for each book
-main_genres <- book_filtered %>%
-  select(first_genre) %>%
-  distinct() %>% pull()
-
-# # First, split the genres for each unique node
+# First, split the genres for each unique node
 node_genres <- book_filtered %>%
   select(id, cleaned_genres) %>%
   distinct() %>%
@@ -167,13 +166,12 @@ node_genres <- book_filtered %>%
 genre_list <- setNames(node_genres$genres_list, node_genres$id)
 
 # Compute the number of common genres for each row in edgelist
-df_edgelist_book$num_common_genre <- mapply(function(v1, v2) {
+df_edgelist$num_common_main_genre <- mapply(function(v1, v2) {
   length(intersect(genre_list[[as.character(v1)]], genre_list[[as.character(v2)]]))
-}, df_edgelist_book$V1, df_edgelist_book$V2)
+}, df_edgelist$V1, df_edgelist$V2)
 #
-# converting dependent variable, is_connected to binary variable
-df_edgelist_book$is_connected <- df_edgelist_book$is_connected * 1
-#
-#save csv
-write.csv(df_edgelist_book, here("outputs/baseline_dataset.csv"), row.names = FALSE)
+# converting dependent variable, is_connected to interger (initially TRUE/FALSE values)
+df_edgelist$is_connected <- df_edgelist_book$is_connected * 1
 
+#save csv
+write.csv(df_edgelist, "../data/baseline_dataset.csv", row.names = FALSE)
