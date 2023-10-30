@@ -2,7 +2,7 @@
 title: "Group Project (exploration)"
 author: "group"
 date: "2023-09-15"
-output: html_document
+output: html_document2
 ---
 
 ```{r setup, include=FALSE}
@@ -25,7 +25,7 @@ library(pROC)
 knitr::opts_knit$set(root.dir = here())
 ```
 
-**Project Background**
+# Project Background
 
 Established in 1995 as a pioneering online bookstore, Amazon has been a cherished destination for book enthusiasts for several decades. While the company has evolved and expanded into a diverse range of industries, it has consistently maintained its status as a go-to hub for book shoppers.
 
@@ -53,64 +53,39 @@ g <- read_graph(here("outputs/filtered_graph.graphml"), format = "graphml")
 # read filtered book data
 books_df <- read.csv(here("outputs/book_filtered.csv"))
 # changing id column and vertex ids from 'int' to 'chr' dtype
-books_df$id <- as.character(books_df$id)
+#books_df$id <- as.character(books_df$id)
 
 g
 
 head(books_df)
 ```
 
-The code cells that are commented out were used to generated the baseline dataset.
-```{r combinations}
-# #generate combinations
-# sample_nodes <- V(g) %>% as_ids()
-# combinations <- combn(sample_nodes, 2, simplify = TRUE)
-# 
-# combi <- combinations[,1]
-# combi
-# 
-# #function to check if a given pair of nodes are connected in a given graph
-# check_connection <- function(combi) {
-#   result <- are.connected(g, combi[1], combi[2])
-#   return(result)
-# }
-# 
-# #check if each pair of nodes are connected
-# is_connected <- combinations %>% apply(., 2, check_connection)
-# 
-# df_edgelist = data.frame(V1 = combinations[1,], V2 = combinations[2,], is_connected = is_connected)
-```
+```{r appending_features_to_baseline_dataset}
+baseline_df <- read.csv('../data/baseline_dataset.csv')
 
-```{r combining_edgelist_with_data}
-# df_edgelist_book <- df_edgelist %>% left_join(books_df %>% select(id, length, rating, reviews, salesrank) %>% rename(V1_length = length, V1_rating = rating, V1_reviews = reviews, V1_salesrank = salesrank), by  = c("V1" = "id")) %>% left_join(books_df %>% select(id, length, rating, reviews, salesrank) %>% rename(V2_length = length, V2_rating = rating, V2_reviews = reviews, V2_salesrank = salesrank), by  = c("V2" = "id"))
-```
+# combining_edgelist_with_data
+baseline_df <- baseline_df %>% 
+  left_join(books_df %>% 
+              select(id, rating, reviews, salesrank, 
+                     first_genre, cleaned_genres, num_main_genres) %>% 
+              rename(V1_rating = rating, V1_reviews = reviews, 
+                     V1_salesrank = salesrank, V1_first_genre = first_genre, 
+                     V1_genres = cleaned_genres, V1_num_main_genres = num_main_genres), 
+            by  = c("V1" = "id")) %>% 
+  left_join(books_df %>% 
+              select(id, rating, reviews, salesrank, 
+                     first_genre, cleaned_genres, num_main_genres) %>% 
+              rename(V2_rating = rating, V2_reviews = reviews, 
+                     V2_salesrank = salesrank, , V2_first_genre = first_genre,
+                     V2_genres = cleaned_genres, V2_num_main_genres = num_main_genres), 
+            by  = c("V2" = "id")) %>%
+  # append is_common first genre column
+  mutate(is_common_main_genre = as.integer(V1_first_genre == V2_first_genre))
 
-```{r aggreating_number_common_genres}
-# 
-# # First, split the genres for each unique node
-# node_genres <- books_df %>%
-#   select(id, cleaned_genres) %>%
-#   distinct() %>%
-#   mutate(genres_list = strsplit(cleaned_genres, "\\|"))
-# 
-# # Create a named list for fast lookup
-# genre_list <- setNames(node_genres$genres_list, node_genres$id)
-# 
-# # Compute the number of common genres for each row in edgelist
-# df_edgelist_book$num_common_genre <- mapply(function(v1, v2) {
-#   length(intersect(genre_list[[as.character(v1)]], genre_list[[as.character(v2)]]))
-# }, df_edgelist_book$V1, df_edgelist_book$V2)
-# 
-# # converting dependent variable, is_connected to binary variable
-# df_edgelist_book$is_connected <- df_edgelist_book$is_connected * 1
-# 
-# #save csv
-# write.csv(df_edgelist_book, "baseline_dataset.csv", row.names = FALSE)
 ```
 
 
-```{r analysing_baseline_dataset}
-baseline_df <- read.csv(here('outputs/baseline_dataset.csv'))
+```{r downsampling_baseline_dataset}
 class_proportions <- baseline_df %>% group_by(is_connected) %>% tally()
 print(class_proportions)
 # The dataset is highly imbalanced and this needs to be handled as if it is not dealt with properly, the algorithm will not be able to learn the characteristics of the minority class properly. Therefore, up-sampling or down-sampling techniques can be used to ensure equal or more balanced proportions between the two classes.
@@ -122,14 +97,26 @@ print(class_proportions)
 set.seed(123)  
 # This function ensures automatically that class proportions are maintained
 index <- createDataPartition(baseline_df$is_connected, p = 0.7, list = FALSE)
-train_data <- baseline_df[index, ]
-test_data <- baseline_df[-index, ]
+train_data <- subset(baseline_df[index, ], select=-c(`V1_first_genre`,
+                                                     `V1_genres`,
+                                                     `V2_first_genre`,
+                                                     `V2_genres`,
+                                                     `num_common_genre`
+                                                     ))
+
+test_data <- subset(baseline_df[-index, ], select=-c(`V1_first_genre`,
+                                                     `V1_genres`,
+                                                     `V2_first_genre`,
+                                                     `V2_genres`,
+                                                     `num_common_genre`
+                                                     ))
 
 # converting dependent variable to factor as many packages require to be in factor
 train_data$is_connected <- as.factor(train_data$is_connected)
 test_data$is_connected <- as.factor(test_data$is_connected)
 
 print(paste("Number of positive class in train data:", sum(train_data$is_connected == 1)))
+print(paste("Number of negative class in downsampled data:", sum(train_data$is_connected == 0)))
 
 # downsampling of the majority class for TRAIN set only. Cannot touch TEST set.
 downsampled_data <- downSample(train_data[, -which(names(train_data) == "is_connected")], train_data$is_connected)
@@ -139,13 +126,16 @@ colnames(downsampled_data)[colnames(downsampled_data) == "Class"] <- "is_connect
 
 print(paste("Number of positive class in downsampled data:", sum(downsampled_data$is_connected == 1)))
 print(paste("Number of negative class in downsampled data:", sum(downsampled_data$is_connected == 0)))
-```
-```{r}
+
 head(downsampled_data)
 ```
+
 ```{r creating_baseline_model}
 # First create a baseline model: Logistic regression. It is chosen for its simplicity and easy interpretability. Come up with a baseline model first without any feature selection or hyperparameter tuning first and see performance.
-baseline_logit_model <- glm(is_connected ~ ., data = downsampled_data, family = binomial(link = "logit"))
+
+
+baseline_logit_model <- glm(is_connected ~ ., data = downsampled_data, 
+                            family = binomial(link = "logit"))
 
 # Summary of the model
 summary(baseline_logit_model)
@@ -153,7 +143,8 @@ summary(baseline_logit_model)
 
 ```{r baseline_model_performance}
 # predictions
-predicted_probs <- predict(baseline_logit_model, newdata = test_data, type = "response")
+predicted_probs <- predict(baseline_logit_model, 
+                           newdata = test_data, type = "response")
 threshold <- 0.5
 predicted_classes <- ifelse(predicted_probs > threshold, 1, 0)
 
@@ -186,6 +177,7 @@ node_attributes_df$transitivity[is.na(node_attributes_df$transitivity)] <- 2
 
 head(node_attributes_df)
 ```
+
 ```{r merging_baseline_dataset_node_attributes}
 ## downsampled_data vertex ids are currently in int format. Convert to chr for left_join(), then convert back to int before model training
 
