@@ -166,7 +166,7 @@ node_genres <- book_filtered %>%
 genre_list <- setNames(node_genres$genres_list, node_genres$id)
 
 # Compute the number of common genres for each row in edgelist
-df_edgelist$num_common_main_genre <- mapply(function(v1, v2) {
+df_edgelist$num_common_genre <- mapply(function(v1, v2) {
   length(intersect(genre_list[[as.character(v1)]], genre_list[[as.character(v2)]]))
 }, df_edgelist$V1, df_edgelist$V2)
 #
