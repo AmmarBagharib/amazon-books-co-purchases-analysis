@@ -18,6 +18,7 @@ library(stringr)
 library(here)
 library(caret)
 library(pROC)
+library(glmnet)
 ```
 
 ```{r , setup, include=FALSE}
@@ -63,21 +64,17 @@ head(books_df)
 ```{r appending_features_to_baseline_dataset}
 baseline_df <- read.csv('../data/baseline_dataset.csv')
 
-# combining_edgelist_with_data
-baseline_df <- baseline_df %>% 
-  left_join(books_df %>% 
-              select(id, rating, reviews, salesrank, 
-                     first_genre, cleaned_genres, num_main_genres) %>% 
-              rename(V1_rating = rating, V1_reviews = reviews, 
-                     V1_salesrank = salesrank, V1_first_genre = first_genre, 
-                     V1_genres = cleaned_genres, V1_num_main_genres = num_main_genres), 
-            by  = c("V1" = "id")) %>% 
-  left_join(books_df %>% 
-              select(id, rating, reviews, salesrank, 
-                     first_genre, cleaned_genres, num_main_genres) %>% 
-              rename(V2_rating = rating, V2_reviews = reviews, 
-                     V2_salesrank = salesrank, , V2_first_genre = first_genre,
-                     V2_genres = cleaned_genres, V2_num_main_genres = num_main_genres), 
+
+### I modified this code to only leftjoin "first_genre" and "num_main_genres" because the baseline_dataset.csv contains info of edgelist + books_df info already
+# removed: rating, reviews, salesrank
+baseline_df <- baseline_df %>%
+  left_join(books_df %>%
+              select(id, first_genre, cleaned_genres, num_main_genres) %>%
+              rename(V1_first_genre = first_genre, V1_genres = cleaned_genres, V1_num_main_genres = num_main_genres),
+            by  = c("V1" = "id")) %>%
+  left_join(books_df %>%
+              select(id, first_genre, cleaned_genres, num_main_genres) %>%
+              rename(V2_first_genre = first_genre, V2_genres = cleaned_genres, V2_num_main_genres = num_main_genres),
             by  = c("V2" = "id")) %>%
   # append is_common first genre column
   mutate(is_common_main_genre = as.integer(V1_first_genre == V2_first_genre))
@@ -89,8 +86,6 @@ baseline_df <- baseline_df %>%
 class_proportions <- baseline_df %>% group_by(is_connected) %>% tally()
 print(class_proportions)
 # The dataset is highly imbalanced and this needs to be handled as if it is not dealt with properly, the algorithm will not be able to learn the characteristics of the minority class properly. Therefore, up-sampling or down-sampling techniques can be used to ensure equal or more balanced proportions between the two classes.
-
-# Idea: Bin salesrank into 10 bins (?) and create into a categorical variable
 
 
 # Code to split into training and test data
@@ -116,7 +111,7 @@ train_data$is_connected <- as.factor(train_data$is_connected)
 test_data$is_connected <- as.factor(test_data$is_connected)
 
 print(paste("Number of positive class in train data:", sum(train_data$is_connected == 1)))
-print(paste("Number of negative class in downsampled data:", sum(train_data$is_connected == 0)))
+print(paste("Number of negative class in original data:", sum(train_data$is_connected == 0)))
 
 # downsampling of the majority class for TRAIN set only. Cannot touch TEST set.
 downsampled_data <- downSample(train_data[, -which(names(train_data) == "is_connected")], train_data$is_connected)
@@ -129,33 +124,70 @@ print(paste("Number of negative class in downsampled data:", sum(downsampled_dat
 
 head(downsampled_data)
 ```
+```{r scaling_data}
+# scaling train data
+x_var_train <- downsampled_data[, !(names(downsampled_data) %in% c("is_connected", "V1", "V2"))]
+scaled_x_train <- scale(x_var_train)
+downsampled_data <- cbind(scaled_x_train, is_connected = downsampled_data$is_connected, V1 = downsampled_data$V1, V2 = downsampled_data$V2)
+
+# we are only interested in the POSITIVE classes of the test data. We evaluate model based on the accuracy in predicting positive class only. We do not care about the negative class. Hence, metrics like ROC-AUC, confusion matrix etc will no longer be necessary.
+
+test_data_positive <- test_data[test_data$is_connected==1,]
+x_var_test <- test_data_positive[, !(names(test_data_positive) %in% c("is_connected", "V1", "V2"))]
+scaled_x_test <- scale(x_var_test)
+test_data_positive <- cbind(scaled_x_test, is_connected = test_data_positive$is_connected, V1 = test_data_positive$V1, V2 = test_data_positive$V2)
+nrow(test_data_positive)
+
+# converting back to dataframe
+downsampled_data <- data.frame(downsampled_data)
+test_data_positive <- data.frame(test_data_positive)
+
+# converting the dependent variable to 0 and 1; somehow it changed to 1 and 2
+downsampled_data$is_connected <- downsampled_data$is_connected - 1
+test_data_positive$is_connected <- test_data_positive$is_connected - 1
+downsampled_data$is_connected <- as.factor(downsampled_data$is_connected)
+test_data_positive$is_connected <- as.factor(test_data_positive$is_connected)
+```
+
 
 ```{r creating_baseline_model}
 # First create a baseline model: Logistic regression. It is chosen for its simplicity and easy interpretability. Come up with a baseline model first without any feature selection or hyperparameter tuning first and see performance.
 
-
-baseline_logit_model <- glm(is_connected ~ ., data = downsampled_data, 
+# training data for logit: Drop V1 and V2 column
+baseline_logit_data <- downsampled_data %>% select(-V1, -V2)
+baseline_logit_model <- glm(is_connected ~ ., data = baseline_logit_data, 
                             family = binomial(link = "logit"))
 
 # Summary of the model
 summary(baseline_logit_model)
 ```
 
+
+
 ```{r baseline_model_performance}
+# dropping V1 and V2 for test data
+baseline_logit_test_data <- test_data_positive %>% select(-V1, -V2)
+
 # predictions
 predicted_probs <- predict(baseline_logit_model, 
-                           newdata = test_data, type = "response")
+                           newdata = baseline_logit_test_data, type = "response")
 threshold <- 0.5
 predicted_classes <- ifelse(predicted_probs > threshold, 1, 0)
 
-# Confusion matrix
-confusion <- confusionMatrix(as.factor(predicted_classes), as.factor(test_data$is_connected))
-print(confusion)
+# accuracy
+accuracy = sum(predicted_classes == 1) / nrow(test_data_positive)
+# Print the accuracy
+print(paste("Accuracy of baseline model", accuracy))
 
-# ROC curve and AUC
-roc_obj <- roc(test_data$is_connected, predicted_probs)
-auc(roc_obj)
-plot(roc_obj, main="ROC curve", col="blue", lwd=2)
+
+# # Confusion matrix
+# confusion <- confusionMatrix(as.factor(predicted_classes), as.factor(test_data_positive$is_connected))
+# print(confusion)
+# 
+# # ROC curve and AUC
+# roc_obj <- roc(test_data_positive$is_connected, predicted_probs)
+# auc(roc_obj)
+# plot(roc_obj, main="ROC curve", col="blue", lwd=2)
 
 ```
 
@@ -167,7 +199,7 @@ node_attributes_df=data.frame(vertex_id=V(g)$name,
                               degree = degree(g),
                               closeness=closeness(g, mode='all'),
                               betweenness=betweenness(g, directed=FALSE),
-                              transitivity=transitivity(g, type = "local"), # There are many NaN transitivity values; it means these nodes are isolated?
+                              transitivity=transitivity(g, type = "local"), # There are many NaN transitivity values; it means these nodes are isolated? What the heck suddenly there are no more NaN values??
                               eigencentrality = eigen_centrality(g)$vector,
                               pagerank = page_rank(g)$vector,
                               component_membership = components(g)$membership) #should we specify weakly or strongly connected component?
@@ -176,6 +208,9 @@ node_attributes_df=data.frame(vertex_id=V(g)$name,
 node_attributes_df$transitivity[is.na(node_attributes_df$transitivity)] <- 2
 
 head(node_attributes_df)
+
+# scaling the node attributes dataframe
+scaled_node_attributes_df <- node_attributes_df %>% select(-vertex_id) %>% scale() %>% as.data.frame() %>% cbind(vertex_id = node_attributes_df$vertex_id)
 ```
 
 ```{r merging_baseline_dataset_node_attributes}
@@ -187,7 +222,7 @@ downsampled_data_2$V1 = as.character(downsampled_data_2$V1)
 downsampled_data_2$V2 = as.character(downsampled_data_2$V2)
 
 merged_data <- downsampled_data_2 %>% 
-  left_join(node_attributes_df %>% 
+  left_join(scaled_node_attributes_df %>% 
               select(vertex_id, degree, closeness, betweenness, 
                      transitivity, eigencentrality, pagerank, component_membership) %>% 
               rename(V1_degree = degree, 
@@ -198,7 +233,7 @@ merged_data <- downsampled_data_2 %>%
                      V1_pagerank = pagerank, 
                      V1_component_membership = component_membership), 
             by = c("V1" = "vertex_id")) %>% 
-  left_join(node_attributes_df %>% select(vertex_id, degree, 
+  left_join(scaled_node_attributes_df %>% select(vertex_id, degree, 
                                           closeness, betweenness, 
                                           transitivity, eigencentrality,
                                           pagerank, component_membership) %>% 
@@ -208,9 +243,9 @@ merged_data <- downsampled_data_2 %>%
                      V2_component_membership = component_membership), 
             by = c("V2" = "vertex_id"))
 
-# converting V1 and V2 back to int
-merged_data$V1 <- as.integer(merged_data$V1)
-merged_data$V2 <- as.integer(merged_data$V2)
+
+# dropping V1 and V2 from the merged data
+merged_data <- merged_data %>% select(-V1, -V2)
 head(merged_data)
 ```
 
@@ -225,13 +260,14 @@ summary(merged_logit_model)
 
 
 ```{r merging_baseline_dataset_node_attributes_test_set}
+# wr are only interested in the positive classes of the test data
 # need to leftjoin test data set also
-merged_test_data <- test_data
-merged_test_data$V1 <- as.character(merged_test_data$V1)
-merged_test_data$V2 <- as.character(merged_test_data$V2)
+merged_test_data_positive <- test_data_positive
+merged_test_data_positive$V1 <- as.character(merged_test_data_positive$V1)
+merged_test_data_positive$V2 <- as.character(merged_test_data_positive$V2)
 
-merged_test_data <- merged_test_data %>% 
-  left_join(node_attributes_df %>% select(vertex_id, degree, closeness, 
+merged_test_data_positive <- merged_test_data_positive %>% 
+  left_join(scaled_node_attributes_df %>% select(vertex_id, degree, closeness, 
                                           betweenness, transitivity, eigencentrality, 
                                           pagerank, component_membership) %>% 
               rename(V1_degree = degree, V1_closeness = closeness, 
@@ -239,7 +275,7 @@ merged_test_data <- merged_test_data %>%
                      V1_eigencentrality = eigencentrality, V1_pagerank = pagerank, 
                      V1_component_membership = component_membership), 
             by = c("V1" = "vertex_id")) %>% 
-  left_join(node_attributes_df %>% select(vertex_id, degree, closeness,
+  left_join(scaled_node_attributes_df %>% select(vertex_id, degree, closeness,
                                           betweenness, transitivity, eigencentrality, 
                                           pagerank, component_membership) %>% 
               rename(V2_degree = degree, V2_closeness = closeness, 
@@ -248,31 +284,71 @@ merged_test_data <- merged_test_data %>%
                      V2_component_membership = component_membership), 
             by = c("V2" = "vertex_id"))
 
-merged_test_data$V1 <- as.integer(merged_test_data$V1)
-merged_test_data$V2 <- as.integer(merged_test_data$V2)
-
-head(merged_test_data)
+ # dropping V1 and V2 columns
+merged_test_data_positive <- merged_test_data_positive %>% select(-V1, -V2)
+head(merged_test_data_positive)
 ```
 
 
 ```{r merged_model_performance}
 # predictions
 merged_predicted_probs <- predict(merged_logit_model, 
-                                  newdata = merged_test_data, 
+                                  newdata = merged_test_data_positive, 
                                   type = "response")
 threshold <- 0.5
 merged_predicted_classes <- ifelse(merged_predicted_probs > threshold, 1, 0)
 
-# Confusion matrix
-merged_confusion <- confusionMatrix(as.factor(merged_predicted_classes), as.factor(merged_test_data$is_connected))
-print(merged_confusion)
+# accuracy
+merged_accuracy = sum(merged_predicted_classes == 1) / nrow(merged_test_data_positive)
+# Print the accuracy
+print(paste("Accuracy of baseline model", merged_accuracy))
 
-# ROC curve and AUC
-merged_roc_obj <- roc(merged_test_data$is_connected, merged_predicted_probs)
-auc(merged_roc_obj)
-plot(merged_roc_obj, main="ROC curve", col="blue", lwd=2)
+# # Confusion matrix
+# merged_confusion <- confusionMatrix(as.factor(merged_predicted_classes), as.factor(merged_test_data$is_connected))
+# print(merged_confusion)
+# 
+# # ROC curve and AUC
+# merged_roc_obj <- roc(merged_test_data$is_connected, merged_predicted_probs)
+# auc(merged_roc_obj)
+# plot(merged_roc_obj, main="ROC curve", col="blue", lwd=2)
 ```
 
+```{r LASSO_feature_selection_hyperparameter_tuning}
+
+set.seed(42)
+
+# shuffle the code first before CV because currently, the dataset is order in the way where it is all negative class then positive class
+merged_data <- merged_data[sample(nrow(merged_data)), ]
+x <- as.matrix(merged_data[, -which(names(merged_data) == "is_connected")])
+y <- merged_data$is_connected
+
+# Fit the regularized LASSO regression model
+# Here, 'alpha' is set to 1 for LASSO
+# use cv.glmnet to perform cross-validation to find the optimal lambda value. Default nfolds = 10.
+cv_fit <- cv.glmnet(x, y, family = "binomial", alpha = 1)
+plot(cv_fit)
+
+# optimal lambda
+best_lambda <- cv_fit$lambda.min
+cat("Best lambda from cross-validation:", best_lambda, "\n")
+
+# tuned model
+tuned_model <- glmnet(x, y, family = "binomial", alpha = 1, lambda = best_lambda)
+
+lasso_coefficients <- coef(tuned_model, s = best_lambda)
+```
+
+```{r tuned_model_predictions}
+x_test <- as.matrix(merged_test_data_positive[, -which(names(merged_test_data_positive) == "is_connected")])
+y_test <- merged_test_data_positive$is_connected
+
+tuned_preds <- ifelse(predict(tuned_model, newx = x_test, type = "respons", s = best_lambda) > 0.5, 1, 0)
+
+# accuracy
+tuned_accuracy = sum(tuned_preds == 1) / nrow(merged_test_data_positive)
+# Print the accuracy
+print(paste("Accuracy of baseline model", tuned_accuracy))
+```
 
 ```{r merging_node_attributes_books_df}
 merged_df = books_df %>% mutate(id = as.character(id)) %>% 
