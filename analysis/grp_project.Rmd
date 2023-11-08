@@ -50,7 +50,7 @@ we've filtered for such book-to-book co-purchases:
 set.seed(123)
 
 # Read the graph from the GraphML file
-g <- read_graph(here("outputs/filtered_graph.graphml"), format = "graphml")
+g <- read_graph(here("outputs/filtered_graph_0601.graphml"), format = "graphml")
 # read filtered book data
 books_df <- read.csv(here("outputs/book_filtered.csv"))
 # changing id column and vertex ids from 'int' to 'chr' dtype
@@ -64,17 +64,16 @@ head(books_df)
 ```{r appending_features_to_baseline_dataset}
 baseline_df <- read.csv('../data/baseline_dataset.csv')
 
-
 ### I modified this code to only leftjoin "first_genre" and "num_main_genres" because the baseline_dataset.csv contains info of edgelist + books_df info already
 # removed: rating, reviews, salesrank
 baseline_df <- baseline_df %>%
   left_join(books_df %>%
-              select(id, first_genre, cleaned_genres, num_main_genres) %>%
-              rename(V1_first_genre = first_genre, V1_genres = cleaned_genres, V1_num_main_genres = num_main_genres),
+              select(id, first_genre, cleaned_genres, num_main_genres, rating, reviews, salesrank) %>%
+              rename(V1_rating = rating, V1_reviews = reviews, V1_salesrank = salesrank, V1_first_genre = first_genre, V1_genres = cleaned_genres, V1_num_main_genres = num_main_genres),
             by  = c("V1" = "id")) %>%
   left_join(books_df %>%
-              select(id, first_genre, cleaned_genres, num_main_genres) %>%
-              rename(V2_first_genre = first_genre, V2_genres = cleaned_genres, V2_num_main_genres = num_main_genres),
+              select(id, first_genre, cleaned_genres, num_main_genres, rating, reviews, salesrank) %>%
+              rename(V2_rating = rating, V2_reviews = reviews, V2_salesrank = salesrank, V2_first_genre = first_genre, V2_genres = cleaned_genres, V2_num_main_genres = num_main_genres),
             by  = c("V2" = "id")) %>%
   # append is_common first genre column
   mutate(is_common_main_genre = as.integer(V1_first_genre == V2_first_genre))
