@@ -24,7 +24,7 @@ head(book_data)
 # filter for books with average of > 1 review per month
 
 # date collected for ls_0302 was in 03 March 2003
-ls_0302 <- read.table('../data/Amazon0302.txt')
+ls_0302 <- read.table('../data/Amazon0601.txt')
 g0302 <- graph_from_data_frame(ls_0302, directed = FALSE)
 
 g_df <- as_long_data_frame(g0302) %>% select(-c("from_name", "to_name"))
@@ -130,15 +130,34 @@ write_graph(g, here("outputs/filtered_graph.graphml"), format = "graphml")
 ########################################################################
 ########################################################################
 # Check combinations of links
-
-
 # combinations
 #generate combinations
 sample_nodes <- V(g) %>% as_ids()
 combinations <- combn(sample_nodes, 2, simplify = TRUE)
 
-combi <- combinations[,1]
+## New combination code
+all_combi_edgelist <- data.frame(V1 = as.character(combinations[1,]),
+                                 V2 = as.character(combinations[2,]))
+current_edgelist <- as.data.frame(as_edgelist(simplify(g), names=TRUE))
 
+no_connection_edgelist <- anti_join(all_combi_edgelist, current_edgelist)
+
+# now, sample 4473 rows of data from the no_connection_edgelist
+set.seed(123)
+# Take a sample of the row numbers
+sampled_rows <- sample(nrow(no_connection_edgelist), size = 4473, replace = FALSE)
+# Use the sampled row numbers to subset the data frame
+sampled_connections <- no_connection_edgelist[sampled_rows, ]
+# combining the  edgelist
+combined_data <- rbind(sampled_connections, current_edgelist)
+# shuffling the data
+shuffled_data <- combined_data[sample(nrow(combined_data)), ]
+row.names(shuffled_data) <- NULL
+View(shuffled_data)
+
+write.csv(shuffled_data, here("outputs/0601_edgelist.csv"), row.names=FALSE)
+
+### Old combination code that will not work if network has too many nodes
 #function to check if a given pair of nodes are connected in a given graph
 check_connection <- function(combi) {
   result <- are.connected(g, combi[1], combi[2])
