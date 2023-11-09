@@ -149,21 +149,6 @@ item_index_books$salesrank <- salesrank_ls
 
 
 ###############################################################################################################
-# genre_one_hot_encoding
-#one-hot encoding function
-OHE_genre <- function(main_genres, str) {
-  op <- lapply(main_genres, function (x) {grepl(x, str)}) %>% unlist() %>% as.numeric()
-  return(op)
-}
-
-#one-hot encoding for genre
-encoded_data <- lapply(cleaned_genres, function(x) {OHE_genre(main_genres, x)})
-encoded_data <- encoded_data %>% as.data.frame() %>% transpose()
-colnames(encoded_data) <- main_genres
-
-#bind column-wise
-item_index_books <- cbind(item_index_books, encoded_data)
-
 
 #save csv
 write.csv(item_index_books, "item_index_books.csv", row.names = FALSE)
