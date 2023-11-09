@@ -21,7 +21,8 @@ num_months <- 31 #number of months between date of co purchases graph and 7th Au
 
 ########################################################################
 ########################################################################
-########################################################################
+# LOAD FILES
+
 # date collected for book_data was in Summer 2006. We take the median date which is 7th August 2006
 book_data <- data.table(distinct(read.csv("../data/item_index_books.csv")))
 
@@ -39,11 +40,11 @@ g <- simplify(graph_from_data_frame(ls, directed = FALSE))
 g_df <- as_long_data_frame(g)[, c("from", "to")] #create dataframe of graph
 
 # Export the igraph object to a GraphML file
-graph_filename <- paste0("outputs/filtered_", graph_name, "_graph.graphml")
+#graph_filename <- paste0("outputs/filtered_", graph_name, "_graph.graphml")
 #write_graph(g, here(graph_filename), format = "graphml")
 ########################################################################
 ########################################################################
-# filtering graph
+# FILTERING GRAPH
 
 # Extract unique vertex names
 vertex_names <- V(g)
@@ -62,26 +63,38 @@ g_df_filtered <- inner_join(g_df, book_filtered[, c("id")], by = c("from" = "id"
 
 ########################################################################
 ########################################################################
+# PRODUCING NEGATIVE COMBINATIONS
+
 # Check combinations of links
 g_filtered <- graph_from_data_frame(g_df_filtered)
 
-# combinations
-#generate combinations
+g_df_filtered$connected <- 1
+
+# Extract the set of nodes from your original graph
 sample_nodes <- V(g_filtered) %>% as_ids()
-combinations <- combn(sample_nodes, 2, simplify = TRUE)
 
-#function to check if a given pair of nodes are connected in a given graph
-check_connection <- function(combi) {
-  result <- are.connected(g_filtered, combi[1], combi[2])
-  return(result)
-}
+# Generate pairs of nodes that are not connected
+non_connected_pairs <- expand.grid(from = sample_nodes, to = sample_nodes) %>%
+  filter(!are.connected(g_filtered, from, to) & from != to)
 
-#check if each pair of nodes are connected
-is_connected <- combinations %>% apply(., 2, check_connection)
+# Sample a subset to match the size of the original g_df_filtered dataset
+set.seed(123)  # Set seed for reproducibility
+non_connected_pairs_subset <- non_connected_pairs[sample(nrow(non_connected_pairs), nrow(g_df_filtered)), ]
 
-g_final_df <- data.frame(B1 = as.numeric(combinations[1,]), 
-                         B2 = as.numeric(combinations[2,]), 
-                         is_connected = as.numeric(is_connected))
+# Create instances with connected == 0
+non_connected_data <- data.frame(
+  from = non_connected_pairs_subset$from,
+  to = non_connected_pairs_subset$to,
+  connected = 0
+)
+
+# Combine with your original data
+g_final_df <- rbind(g_df_filtered, non_connected_data) %>% 
+  mutate(from = as.numeric(from), to = as.numeric(to))
+
+########################################################################
+########################################################################
+# APPEND BASELINE FEATURES
 
 # aggregating_number_common_genres
 # First, split the genres for each unique node
@@ -98,23 +111,21 @@ g_final_df$num_common_genre <- mapply(function(v1, v2) {
   length(intersect(
     genre_list[[as.character(v1)]], 
     genre_list[[as.character(v2)]]))
-}, g_final_df$B1, g_final_df$B2)
+}, g_final_df$from, g_final_df$from)
 
-# Left join 'book_attributes' onto 'g_df' based on "B1/B2" and "id"
-g_final_df <- left_join(book_filtered, by = c("B1"="id")) %>%
+# Left join 'book_attributes' onto 'g_df' based on "from/to" and "id"
+g_final_df <- g_final_df %>% left_join(book_filtered[,-c("cleaned_genres")], by = c("from"="id")) %>%
   rename(
-    "B1_salesrank"="salesrank",
-    "B1_rating"="rating",
-    "B1_reviews"="reviews"
+    "from_salesrank"="salesrank",
+    "from_rating"="rating",
+    "from_reviews"="reviews"
   ) %>%
-  left_join(book_filtered, by=c("B2"="id")) %>%
+  left_join(book_filtered[,-c("cleaned_genres")], by=c("to"="id")) %>%
   rename(
-    "B2_salesrank"="salesrank",
-    "B2_rating"="rating",
-    "B2_reviews"="reviews"
+    "to_salesrank"="salesrank",
+    "to_rating"="rating",
+    "to_reviews"="reviews"
   )
-  # inner join once more for valid "to" books
-  inner_join(., book_filtered[, c("id")], by = c("to" = "id"))
 
 #save csv
 g_final_df_filename <- paste0("outputs/baseline_features_", graph_name, ".csv")
