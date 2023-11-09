@@ -1,3 +1,8 @@
+########################################################################
+#This script outputs the following files:
+# 1. book_filtered_(graph).csv
+# 2. 
+
 library(igraph)
 library(data.table)
 library(here)
@@ -5,6 +10,16 @@ library(dplyr)
 library(caret)
 library(pROC)
 setwd(here())
+
+
+########################################################################
+# SPECIFY THE FILE NAME HERE
+graph_name <- "0601"
+
+# input whether running for train or test: if train, put "FALSE", else, put "TRUE"
+test <- TRUE
+# THEN RUN THE ENTIRE SCRIPT
+########################################################################
 
 ########################################################################
 ########################################################################
@@ -24,7 +39,10 @@ head(book_data)
 # filter for books with average of > 1 review per month
 
 # date collected for ls_0302 was in 03 March 2003
-ls_0302 <- read.table('../data/Amazon0601.txt')
+
+txt_file_name <- paste0("../data/Amazon", graph_name, ".txt")
+
+ls_0302 <- read.table(txt_file_name)
 g0302 <- graph_from_data_frame(ls_0302, directed = FALSE)
 
 g_df <- as_long_data_frame(g0302) %>% select(-c("from_name", "to_name"))
@@ -84,47 +102,52 @@ count_common_main_genres <- function(genre_string) {
 # Apply the function to each row of the dataframe
 book_filtered$num_main_genres <- sapply(book_filtered$cleaned_genres, count_common_main_genres)
 
-write.csv(book_filtered, here("outputs/book_filtered.csv"), row.names=FALSE)
+bookfiltered_filename <- paste0("outputs/book_filtered_", graph_name, ".csv")
 
+write.csv(book_filtered, here(bookfiltered_filename), row.names=FALSE)
 
+# append main genres to result df
+num_main_genres_df <- book_filtered[, c("id", "num_main_genres")]
+result_df <- result_df %>%
+  
+  left_join(num_main_genres_df, by = c("from" = "id")) %>%
+  rename("from_num_main_genres"="num_main_genres") %>%
+  
+  left_join(num_main_genres_df, by = c("to" = "id")) %>%
+  rename("to_num_main_genres"="num_main_genres")
+
+### remove multiple loops from result_df
+# the following code sorts each row of result_df to ensure consistent order for undirected edges 
+# and then removes duplicates, resulting in unique undirected connections. 
+
+# Sort each row in result_df to ensure consistent order for undirected edges
+result_df_sorted <- result_df
+result_df_sorted[] <- t(apply(result_df_sorted, 1, sort))
+
+# Remove duplicates
+result_df_unique <- unique(result_df_sorted)
+
+# check if duplicates done correctly:
+# Create an igraph object, and remove the multiple loops
+g <- simplify(graph_from_data_frame(result_df[, c("from", "to")], directed=FALSE))
+
+if (nrow(result_df_unique) == ecount(g)){
+  print("result_df_unique has filtered for multiple loops successfully")
+} else {
+  print("result_df_unique has NOT filtered for multiple loops")
+}
+
+results_df_unique_filename <- paste0()
+
+  
 ########################################################################
 ########################################################################
 # Create graph
-
-# Create an igraph object
-g <- graph_from_data_frame(result_df[, c("from", "to")], directed=FALSE)
-
-# Step 1: Create a mapping between book IDs in the graph and row IDs in the data frame
-book_ids <- V(g)$name  # Extract book IDs from the graph
-row_ids <- match(book_ids, book_filtered$id)  # Match graph IDs to row IDs
-
-# Step 2: Create a data frame with the attributes to be added
-vertex_data <- data.frame(
-  book1_first_genre = book_filtered$first_genre[row_ids],
-  book2_first_genre = book_filtered$first_genre[row_ids],
-  book1_rating = book_filtered$rating[row_ids],
-  book2_rating = book_filtered$rating[row_ids],
-  book1_reviews = book_filtered$reviews[row_ids],
-  book2_reviews = book_filtered$reviews[row_ids],
-  book1_salesrank = book_filtered$salesrank[row_ids],
-  book2_salesrank = book_filtered$salesrank[row_ids]
-)
-
-
-# Step 3: Add these attributes to the graph as vertex attributes
-V(g)$book1_first_genre <- vertex_data$book1_first_genre
-V(g)$book2_first_genre <- vertex_data$book2_first_genre
-V(g)$book1_rating <- vertex_data$book1_rating
-V(g)$book2_rating <- vertex_data$book2_rating
-V(g)$book1_reviews <- vertex_data$book1_reviews
-V(g)$book2_reviews <- vertex_data$book2_reviews
-V(g)$book1_salesrank <- vertex_data$book1_salesrank
-V(g)$book2_salesrank <- vertex_data$book2_salesrank
-
-#g
+# we reference graph 'g' that was created earlier
 
 # Export the igraph object to a GraphML file
-write_graph(g, here("outputs/filtered_graph.graphml"), format = "graphml")
+graph_filename <- paste0("outputs/filtered_", graph_name, "_graph.graphml")
+write_graph(g, here(graph_filename), format = "graphml")
 
 
 ########################################################################
@@ -138,10 +161,14 @@ combinations <- combn(sample_nodes, 2, simplify = TRUE)
 ## New combination code
 all_combi_edgelist <- data.frame(V1 = as.character(combinations[1,]),
                                  V2 = as.character(combinations[2,]))
+
 current_edgelist <- as.data.frame(as_edgelist(simplify(g), names=TRUE))
 
 no_connection_edgelist <- anti_join(all_combi_edgelist, current_edgelist)
 
+if (test){
+  
+}
 # now, sample 4473 rows of data from the no_connection_edgelist
 set.seed(123)
 # Take a sample of the row numbers
@@ -153,8 +180,9 @@ combined_data <- rbind(sampled_connections, current_edgelist)
 # shuffling the data
 shuffled_data <- combined_data[sample(nrow(combined_data)), ]
 row.names(shuffled_data) <- NULL
-View(shuffled_data)
+#View(shuffled_data)
 
+shuffled_data <- 
 write.csv(shuffled_data, here("outputs/0601_edgelist.csv"), row.names=FALSE)
 
 ### Old combination code that will not work if network has too many nodes
@@ -193,4 +221,5 @@ df_edgelist$num_common_genre <- mapply(function(v1, v2) {
 df_edgelist$is_connected <- df_edgelist_book$is_connected * 1
 
 #save csv
-write.csv(df_edgelist, "../data/baseline_dataset.csv", row.names = FALSE)
+
+write.csv(df_edgelist, "../data/0601_baseline_dataset.csv", row.names = FALSE)
