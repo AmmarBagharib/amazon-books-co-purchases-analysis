@@ -6,7 +6,7 @@ setwd(here())
 
 ########################################################################
 # SPECIFY THE FILE NAME HERE
-graph_name <- '0505'
+graph_name <- '0302'
 
 # THEN RUN THE ENTIRE SCRIPT
 ########################################################################
@@ -67,15 +67,23 @@ if (!all_nodes_present) {
   cat("All nodes are present in g_filtered.\n")
 }
 
+start_time <- Sys.time()
+
 df=data.frame(vertex_name=V(g_filtered)$name,
               degree=degree(g_filtered),
               closeness=closeness(g_filtered),
               betweenness=betweenness(g_filtered, normalized=T),
               transitivity=transitivity(g_filtered, type="local"),
               eigenvec_centrality=eigen_centrality(g_filtered)$vector,
-              pagerank=page_rank()
+              pagerank=page_rank(g_filtered)$vector
               )
 
+# Record the end time
+end_time <- Sys.time()
+
+# Calculate and print the runtime
+runtime <- end_time - start_time
+print(paste("Elapsed time:", runtime))
 
 ########################################################################
 # Deciding on community algorithm
@@ -103,12 +111,12 @@ c2 <- cluster_louvain(g_filtered)
 # modularity measure
 modularity(c2)
 # 0302:
-# [1] 0.9495689
+# [1] 0.9534968
 
 # number of communities
 length(c2)
 # 0302:
-## [1] 12470
+## [1] 11871
 
 ########################################################################
 
@@ -116,6 +124,12 @@ length(c2)
 df$community_membership <- membership(c2)
 
 df$vertex_name <- as.integer(df$vertex_name)
+
+if (graph_name == "0302"){
+  network_df <- df %>% filter(df$vertex_name %in% nodes)
+  file_path <- paste0('outputs/network_metrics_', graph_name, ".csv")
+  write.csv(network_df, here(file_path), row.names = FALSE)
+}
 
 final_df <- left_join(features_df, df, by=c("from_name"="vertex_name")) %>%
   rename('from_degree'='degree',
@@ -133,10 +147,11 @@ final_df <- left_join(features_df, df, by=c("from_name"="vertex_name")) %>%
          'to_eigenvec_centrality'='eigenvec_centrality',
          'to_community_membership'='community_membership') %>%
   
-  mutate(same_community = as.integer(from_community_membership==to_community_membership)) %>%
-  select(-c('from_community_membership', 'to_community_membership'))
+  mutate(same_community = as.integer(from_community_membership==to_community_membership)) 
 
+final_df <- final_df %>% select(-c('from_community_membership', 'to_community_membership'))
 
 file_path <- paste0('outputs/baseline_and_network_metrics_', graph_name, ".csv")
 write.csv(final_df, here(file_path), row.names = FALSE)
+
 

@@ -31,9 +31,9 @@ ls_0505 <- read.table(txt_file_name_0505)
 g_0505 <- simplify(graph_from_data_frame(ls_0505, directed = FALSE))
 
 # Find nodes with degree greater than 1
-nodes_to_keep <- V(g_0505)[degree(g_0505) > 1]
+nodes_to_keep_0505 <- V(g_0505)[degree(g_0505) > 1]
 
-g_0505 <- subgraph(g_0505, nodes_to_keep)
+g_0505 <- subgraph(g_0505, nodes_to_keep_0505)
 
 ########################################################################
 # find common nodes between new nodes and 0301 graph
@@ -44,9 +44,9 @@ ls_0301 <- read.table(txt_file_name_0301)
 g_0301 <- simplify(graph_from_data_frame(ls_0301, directed = FALSE))
 
 # Find nodes with degree greater than 1
-nodes_to_keep <- V(g_0301)[degree(g_0301) > 1]
+nodes_to_keep_0301 <- V(g_0301)[degree(g_0301) > 1]
 
-g_0301 <- subgraph(g_0301, nodes_to_keep)
+g_0301 <- subgraph(g_0301, nodes_to_keep_0301)
 
 # keep only nodes that were present in g_0301 and g_0505
 common_nodes <- intersect(new_nodes, union(V(g_0505)$name, V(g_0301)$name))
@@ -98,6 +98,7 @@ df1=data.frame(vertex_name=as.integer(V(g_filtered_0301)$name),
               betweenness=betweenness(g_filtered_0301, normalized=T),
               transitivity=transitivity(g_filtered_0301, type="local"),
               eigenvec_centrality=eigen_centrality(g_filtered_0301)$vector,
+              pagerank=page_rank(g_filtered_0301),
               community_membership=membership(cluster_louvain(g_filtered_0301))
 )
 
@@ -162,6 +163,7 @@ df2=data.frame(vertex_name=as.integer(V(g_filtered_0505)$name),
               betweenness=betweenness(g_filtered_0505, normalized=T),
               transitivity=transitivity(g_filtered_0505, type="local"),
               eigenvec_centrality=eigen_centrality(g_filtered_0505)$vector,
+              pagerank=page_rank(g_filtered_0505),
               community_membership=membership(cluster_louvain(g_filtered_0505))
 )
 
