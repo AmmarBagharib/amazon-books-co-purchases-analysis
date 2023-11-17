@@ -72,7 +72,8 @@ df=data.frame(vertex_name=V(g_filtered)$name,
               closeness=closeness(g_filtered),
               betweenness=betweenness(g_filtered, normalized=T),
               transitivity=transitivity(g_filtered, type="local"),
-              eigenvec_centrality=eigen_centrality(g_filtered)$vector
+              eigenvec_centrality=eigen_centrality(g_filtered)$vector,
+              pagerank=page_rank()
               )
 
 

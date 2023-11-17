@@ -25,32 +25,31 @@ new_nodes <- union(filtered_base_0601$from_name, filtered_base_0601$to_name)
 # find common nodes between new nodes and 0505 graph
 # LOAD 0505 graph
 txt_file_name_0505 <- paste0("../data/Amazon", '0505', ".txt")
-ls_0505 <- read.table(txt_file_name)
+ls_0505 <- read.table(txt_file_name_0505)
 
 # create graph object, and remove multiple loops
-g_0505 <- simplify(graph_from_data_frame(ls, directed = FALSE))
+g_0505 <- simplify(graph_from_data_frame(ls_0505, directed = FALSE))
 
 # Find nodes with degree greater than 1
 nodes_to_keep <- V(g_0505)[degree(g_0505) > 1]
 
 g_0505 <- subgraph(g_0505, nodes_to_keep)
 
-common_nodes <- intersect(new_nodes, V(g_0505)$name)
-
 ########################################################################
 # find common nodes between new nodes and 0301 graph
-txt_file_name_0301 <- paste0("../data/Amazon", '0301', ".txt")
-ls_0301 <- read.table(txt_file_name)
+txt_file_name_0301 <- paste0("../data/Amazon", '0302', ".txt")
+ls_0301 <- read.table(txt_file_name_0301)
 
 # create graph object, and remove multiple loops
-g_0301 <- simplify(graph_from_data_frame(ls, directed = FALSE))
+g_0301 <- simplify(graph_from_data_frame(ls_0301, directed = FALSE))
 
 # Find nodes with degree greater than 1
 nodes_to_keep <- V(g_0301)[degree(g_0301) > 1]
 
 g_0301 <- subgraph(g_0301, nodes_to_keep)
 
-common_nodes <- intersect(common_nodes, V(g_0301)$name)
+# keep only nodes that were present in g_0301 and g_0505
+common_nodes <- intersect(new_nodes, union(V(g_0505)$name, V(g_0301)$name))
 
 # Number of nodes to sample from graph
 total_sample_size <- 100000
@@ -76,10 +75,10 @@ set.seed(42)
 remaining_indices_0301 <- sample(setdiff(1:length(V(g_0301)), common_node_indices_0301), size=remaining_sample_size)
 
 # Combine nodes from nodes and remaining_sampled_nodes
-combined_nodes_0301 <- c(common_node_indices_0301, remaining_indices_0301)
+combined_nodes_indices_0301 <- c(common_node_indices_0301, remaining_indices_0301)
 
 # Filter graph to include only nodes present in the nodes vector
-g_filtered_0301<- subgraph(g_0301, combined_nodes_0301)
+g_filtered_0301<- subgraph(g_0301, combined_nodes_indices_0301)
 
 # Check if all nodes are present in the filtered graph
 all_nodes_present_0301 <- all(common_nodes %in% V(g_filtered_0301)$name)
@@ -89,7 +88,7 @@ if (!all_nodes_present_0301) {
   missing_nodes_0301 <- setdiff(common_nodes, intersect(common_nodes, V(g_filtered_0301)$name))
   cat("Nodes missing in g_filtered_0301.:", missing_nodes_0301, "\n")
 } else {
-  cat("All nodes are present in g_filtered_0301.\n")
+  cat("All nodes from new links are present in g_filtered_0301.\n")
 }
 
 # appending 0301 network metrics on nodes present in newly formed links in 0601
@@ -102,6 +101,8 @@ df1=data.frame(vertex_name=as.integer(V(g_filtered_0301)$name),
               community_membership=membership(cluster_louvain(g_filtered_0301))
 )
 
+length(setdiff(new_nodes, common_nodes))
+
 final_df_0301 <- left_join(filtered_base_0601, df1, by=c("from_name"="vertex_name")) %>%
   rename('from_degree'='degree',
          'from_closeness'='closeness',
@@ -109,6 +110,7 @@ final_df_0301 <- left_join(filtered_base_0601, df1, by=c("from_name"="vertex_nam
          'from_transitivity'='transitivity',
          'from_eigenvec_centrality'='eigenvec_centrality',
          'from_community_membership'='community_membership') %>%
+  filter(!is.na(from_degree)) %>% # remove rows where the nodes from `new_nodes` are not present in `from_name`
   
   left_join(df1, by=c("to_name"="vertex_name")) %>%
   rename('to_degree'='degree',
@@ -117,6 +119,7 @@ final_df_0301 <- left_join(filtered_base_0601, df1, by=c("from_name"="vertex_nam
          'to_transitivity'='transitivity',
          'to_eigenvec_centrality'='eigenvec_centrality',
          'to_community_membership'='community_membership') %>%
+  filter(!is.na(to_degree))
   
   mutate(same_community = as.integer(from_community_membership==to_community_membership)) %>%
   select(-c('from_community_membership', 'to_community_membership'))
@@ -139,7 +142,7 @@ remaining_indices_0505 <- sample(setdiff(1:length(V(g_0505)), common_node_indice
 combined_nodes_0505 <- c(common_node_indices_0505, remaining_indices_0505)
 
 # Filter graph to include only nodes present in the nodes vector
-g_filtered_0505<- subgraph(g_0505, combined_nodes_0505)
+g_filtered_0505 <- subgraph(g_0505, combined_nodes_0505)
 
 # Check if all nodes are present in the filtered graph
 all_nodes_present_0505 <- all(common_nodes %in% V(g_filtered_0505)$name)
@@ -169,6 +172,7 @@ final_df_0505 <- left_join(filtered_base_0601, df2, by=c("from_name"="vertex_nam
          'from_transitivity'='transitivity',
          'from_eigenvec_centrality'='eigenvec_centrality',
          'from_community_membership'='community_membership') %>%
+  filter(!is.na(from_degree)) %>% # remove rows where the nodes from `new_nodes` are not present in `from_name`
   
   left_join(df1, by=c("to_name"="vertex_name")) %>%
   rename('to_degree'='degree',
@@ -177,7 +181,8 @@ final_df_0505 <- left_join(filtered_base_0601, df2, by=c("from_name"="vertex_nam
          'to_transitivity'='transitivity',
          'to_eigenvec_centrality'='eigenvec_centrality',
          'to_community_membership'='community_membership') %>%
-  
+  filter(!is.na(to_degree)) %>%
+
   mutate(same_community = as.integer(from_community_membership==to_community_membership)) %>%
   select(-c('from_community_membership', 'to_community_membership'))
 
