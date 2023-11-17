@@ -138,9 +138,6 @@ final_df_0302 <- left_join(filtered_base_0601, df1, by=c("from_name"="vertex_nam
   mutate(same_community = as.integer(from_community_membership==to_community_membership)) %>%
   select(-c('from_community_membership', 'to_community_membership'))
 
-file_path_0302 <- paste0('outputs/baseline_0601_and_0302_network_metrics.csv')
-write.csv(final_df_0302, here(file_path_0302), row.names = FALSE)
-
 
 ########################################################################
 # 0505 network metrics
@@ -201,11 +198,41 @@ final_df_0505 <- left_join(filtered_base_0601, df2, by=c("from_name"="vertex_nam
   mutate(same_community = as.integer(from_community_membership==to_community_membership)) %>%
   select(-c('from_community_membership', 'to_community_membership'))
 
-file_path_0505 <- paste0('outputs/baseline_0601_and_0505_network_metrics.csv')
-write.csv(final_df_0505, here(file_path_0505), row.names = FALSE)
+########################################################################
+# check output dfs will have same number of nodes
 
+x <- union(final_df_0302$from_name, final_df_0302$to_name)
+y <- union(final_df_0505$from_name, final_df_0505$to_name)
+length(x) == length(y)
+# [1] FALSE
 
+# since false, conduct inner join to further ensure same number of nodes
+# store final links
+final_links <- inner_join(final_df_0302, final_df_0505, by=c("from_name", "to_name")) %>% 
+  select(from_name, to_name)
 
+# filter 0302
+final_df_0302_ <- inner_join(final_df_0302, final_links, by=c("from_name", "to_name"))
 
+# filter 0505
+final_df_0505_ <- inner_join(final_df_0505, final_links, by=c("from_name", "to_name"))
+
+# ensure links are identical
+identical(final_df_0302_[c("from_name", "to_name")], final_df_0505_[c("from_name", "to_name")])
+# [1] TRUE
+
+# ensure they're not the same dataframes
+identical(final_df_0302_, final_df_0505_)
+# [1] FALSE
+if (identical(final_df_0302_[c("from_name", "to_name")], final_df_0505_[c("from_name", "to_name")])){
+  
+  file_path_0302 <- paste0('outputs/baseline_0601_and_0302_network_metrics.csv')
+  write.csv(final_df_0302_, here(file_path_0302), row.names = FALSE)
+  
+  file_path_0505 <- paste0('outputs/baseline_0601_and_0505_network_metrics.csv')
+  write.csv(final_df_0505_, here(file_path_0505), row.names = FALSE)
+} else {
+  print("links are not identical")
+}
 
 
