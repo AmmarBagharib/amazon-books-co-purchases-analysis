@@ -2,8 +2,6 @@ library(here)
 library(dplyr)
 setwd(here())
 ########################################################################
-# LOAD test full data
-test_0601_0302 <- read.csv(here('outputs/baseline_0601_and_0302_network_metrics.csv'))
 ########################################################################
 # LOAD train full data
 train_0302 <- read.csv(here('outputs/baseline_and_network_metrics_0302.csv'))
