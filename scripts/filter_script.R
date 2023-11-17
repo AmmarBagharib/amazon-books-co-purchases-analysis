@@ -35,9 +35,11 @@ book_data <- book_data[, first_genre := sub("\\|.*", "", cleaned_genres)][, c("i
 txt_file_name <- paste0("../data/Amazon", graph_name, ".txt")
 ls <- read.table(txt_file_name)
 
+
+
 # create graph object, and remove multiple loops
 g <- simplify(graph_from_data_frame(ls, directed = FALSE))
-g_df <- as_long_data_frame(g)[, c("from", "to")] #create dataframe of graph
+g_df <- as_long_data_frame(g)[, c("from_name", "to_name")] #create dataframe of graph
 
 # Export the igraph object to a GraphML file
 #graph_filename <- paste0("outputs/filtered_", graph_name, "_graph.graphml")
@@ -59,9 +61,12 @@ book_filtered <- book_data %>%
          (reviews/(num_months)) > 1   # we filter for books which on average, has > 1 review per 1.25 months
          )
 
-g_df_filtered <- inner_join(g_df, book_filtered[, c("id")], by = c("from" = "id")) %>%
+g_df$from_name <- as.integer(g_df$from_name)
+g_df$to_name <- as.integer(g_df$to_name)
+
+g_df_filtered <- inner_join(g_df, book_filtered[, c("id")], by = c("from_name" = "id")) %>%
   # inner join once more for valid "to" books
-  inner_join(., book_filtered[, c("id")], by = c("to" = "id"))
+  inner_join(., book_filtered[, c("id")], by = c("to_name" = "id"))
 
 dim(g_df_filtered)
 
@@ -87,14 +92,14 @@ non_connected_pairs_subset <- non_connected_pairs[sample(nrow(non_connected_pair
 
 # Create instances with connected == 0
 non_connected_data <- data.frame(
-  from = non_connected_pairs_subset$from,
-  to = non_connected_pairs_subset$to,
+  from_name = non_connected_pairs_subset$from,
+  to_name = non_connected_pairs_subset$to,
   connected = 0
 )
 
 # Combine with your original data
 g_final_df <- rbind(g_df_filtered, non_connected_data) %>% 
-  mutate(from = as.numeric(from), to = as.numeric(to))
+  mutate(from_name = as.numeric(from_name), to_name = as.numeric(to_name))
 
 ########################################################################
 ########################################################################
@@ -118,13 +123,13 @@ g_final_df$num_common_genre <- mapply(function(v1, v2) {
 }, g_final_df$from, g_final_df$from)
 
 # Left join 'book_attributes' onto 'g_df' based on "from/to" and "id"
-g_final_df <- g_final_df %>% left_join(book_filtered[,-c("cleaned_genres")], by = c("from"="id")) %>%
+g_final_df <- g_final_df %>% left_join(book_filtered[,-c("cleaned_genres")], by = c("from_name"="id")) %>%
   rename(
     "from_salesrank"="salesrank",
     "from_rating"="rating",
     "from_reviews"="reviews"
   ) %>%
-  left_join(book_filtered[,-c("cleaned_genres")], by=c("to"="id")) %>%
+  left_join(book_filtered[,-c("cleaned_genres")], by=c("to_name"="id")) %>%
   rename(
     "to_salesrank"="salesrank",
     "to_rating"="rating",
