@@ -120,7 +120,7 @@ g_final_df$num_common_genre <- mapply(function(v1, v2) {
   length(intersect(
     genre_list[[as.character(v1)]], 
     genre_list[[as.character(v2)]]))
-}, g_final_df$from, g_final_df$from)
+}, g_final_df$from_name, g_final_df$to_name)
 
 # Left join 'book_attributes' onto 'g_df' based on "from/to" and "id"
 g_final_df <- g_final_df %>% left_join(book_filtered[,-c("cleaned_genres")], by = c("from_name"="id")) %>%
