@@ -49,17 +49,21 @@ g_df <- as_long_data_frame(g)[, c("from", "to")] #create dataframe of graph
 # Extract unique vertex names
 vertex_names <- V(g)
 
+num_months <- num_months * 0.8
+
 # filtered book_data
 book_filtered <- book_data %>% 
   filter(id %in% vertex_names,
          !is.na(cleaned_genres),
          cleaned_genres != "",
-         (reviews/(num_months)) > 1   # we filter for books which on average, has > 1 review per 1.5 months
+         (reviews/(num_months)) > 1   # we filter for books which on average, has > 1 review per 1.25 months
          )
 
 g_df_filtered <- inner_join(g_df, book_filtered[, c("id")], by = c("from" = "id")) %>%
   # inner join once more for valid "to" books
   inner_join(., book_filtered[, c("id")], by = c("to" = "id"))
+
+dim(g_df_filtered)
 
 ########################################################################
 ########################################################################
