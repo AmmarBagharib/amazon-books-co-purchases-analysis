@@ -97,7 +97,7 @@ length(c1)
 
 ########################################################################
 # louvain community
-c2 <- cluster_louvain(sampled_subgraph)
+c2 <- cluster_louvain(g_filtered)
 
 # modularity measure
 modularity(c2)

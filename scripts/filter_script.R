@@ -39,6 +39,11 @@ ls <- read.table(txt_file_name)
 
 # create graph object, and remove multiple loops
 g <- simplify(graph_from_data_frame(ls, directed = FALSE))
+# Find nodes with degree greater than 1
+nodes_to_keep <- V(g)[degree(g) > 1]
+
+g <- subgraph(g, nodes_to_keep)
+
 g_df <- as_long_data_frame(g)[, c("from_name", "to_name")] #create dataframe of graph
 
 # Export the igraph object to a GraphML file
@@ -67,6 +72,11 @@ g_df$to_name <- as.integer(g_df$to_name)
 g_df_filtered <- inner_join(g_df, book_filtered[, c("id")], by = c("from_name" = "id")) %>%
   # inner join once more for valid "to" books
   inner_join(., book_filtered[, c("id")], by = c("to_name" = "id"))
+
+nodes <- union(g_df_filtered$from_name, g_df_filtered$to_name)
+length(nodes)
+
+all(nodes %in% V(g)$name)
 
 dim(g_df_filtered)
 
