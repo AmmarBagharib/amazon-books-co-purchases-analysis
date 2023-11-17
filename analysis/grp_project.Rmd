@@ -46,164 +46,45 @@ we've filtered for such book-to-book co-purchases:
 1. With average reviews > 1 in 31 month period (for both books)
 2. in a co-purchase, both books have a valid genre i.e., not an empty string
 
-```{r read_data}
+```{r load-models}
 set.seed(123)
+# model 1: baseline features only
+model1_0302 <- readRDS(here("outputs/ml_models/logistic_model1_0302.rds"))
 
-# Read the graph from the GraphML file
-# g <- read_graph(here("outputs/filtered_graph_0601.graphml"), format = "graphml")
-# read filtered book data
-baseline_0302 <- read.csv(here("outputs/baseline_features_0302.csv"))
-baseline_network_0302 <- read.csv(here("outputs/baseline_and_network_metrics_0302.csv"))
+# model 2: network metrics only
+model2_0302 <- readRDS(here("outputs/ml_models/logistic_model2_0302.rds"))
 
-baseline_0505 <- read.csv(here("outputs/baseline_features_0505.csv"))
-baseline_network_0505 <- read.csv(here("outputs/baseline_and_network_metrics_0505.csv"))
+# model 3: baseline features + network metrics
+model3_0302 <- readRDS(here("outputs/ml_models/logistic_model3_0302.rds"))
 
-baseline_0601 <- read.csv(here("outputs/baseline_features_0601.csv"))
-# changing id column and vertex ids from 'int' to 'chr' dtype
-#books_df$id <- as.character(books_df$id)
+# model 1: baseline features only
+model1_0505 <- readRDS(here("outputs/ml_models/logistic_model1_0505.rds"))
 
-# g
+# model 2: network metrics only
+model2_0505 <- readRDS(here("outputs/ml_models/logistic_model2_0505.rds"))
 
-# Names of data frames
-data_frame_names <- c("baseline_0302", "baseline_network_0302", "baseline_0505", "baseline_network_0505", "baseline_0601")
+# model 3: baseline features + network metrics
+model3_0505 <- readRDS(here("outputs/ml_models/logistic_model3_0505.rds"))
 
-# Print the head of each data frame
-for (df_name in data_frame_names) {
-  print(head(get(df_name)))
-}
-
+# test data
+test_0601_0302 <- read.csv(here('outputs/baseline_0601_and_0302_network_metrics.csv'))
 ```
 
-```{r scaling_dataset_function}
-scale_dataset <- function(df, dependent_var = 'connected') {
-  independent_vars <- setdiff(names(df), dependent_var)
-  
-  # Scale the independent variables
-  df[independent_vars] <- scale(df[independent_vars])
-  
-  # Ensure the dependent variable is a factor if it's not already
-  df[[dependent_var]] <- as.factor(df[[dependent_var]])
-  
-  return(df)
-}
-
-
-scaled_baseline_0302 <- scale_dataset(baseline_0302)
-scaled_baseline_network_0302 <- scale_dataset(baseline_network_0302)
-
-scaled_baseline_0505 <- scale_dataset(baseline_0505)
-scaled_baseline_network_0505 <- scale_dataset(baseline_network_0505)
-scaled_baseline_0601 <- scale_dataset(baseline_0601)
+```{r models_accuracy}
 
 ```
 
 
-```{r appending_features_to_baseline_dataset}
-# baseline_df <- read.csv('../data/baseline_dataset.csv')
-# 
-# # append book 1 and 2 attributes
-# baseline_df <- baseline_df %>%
-#   
-#   left_join(books_df %>%
-#               select(id, first_genre, cleaned_genres, 
-#                      num_main_genres, rating, reviews, salesrank) %>%
-#               rename(V1_rating = rating, V1_reviews = reviews, 
-#                      V1_salesrank = salesrank, V1_first_genre = first_genre,
-#                      V1_genres = cleaned_genres, V1_num_main_genres = num_main_genres),
-#             by  = c("V1" = "id")) %>%
-#   
-#   left_join(books_df %>%
-#               select(id, first_genre, cleaned_genres, 
-#                      num_main_genres, rating, reviews, salesrank) %>%
-#               rename(V2_rating = rating, V2_reviews = reviews, 
-#                      V2_salesrank = salesrank, V2_first_genre = first_genre, 
-#                      V2_genres = cleaned_genres, V2_num_main_genres = num_main_genres),
-#             by  = c("V2" = "id")) %>%
-#   # append is_common first genre column
-#   mutate(is_common_main_genre = as.integer(V1_first_genre == V2_first_genre))
+```{r coefficients}
 
 ```
 
-
-```{r splitting_baseline_dataset}
-# # class_proportions <- baseline_df %>% group_by(is_connected) %>% tally()
-# # print(class_proportions)
-# # # The dataset is highly imbalanced and this needs to be handled as if it is not dealt with properly, the algorithm will not be able to learn the characteristics of the minority class properly. Therefore, up-sampling or down-sampling techniques can be used to ensure equal or more balanced proportions between the two classes.
-# 
-# 
-# # Code to split into training and test data
-# set.seed(123)  
-# # This function ensures automatically that class proportions are maintained
-# index <- createDataPartition(baseline_df$connected, p = 0.7, list = FALSE)
-# 
-# train_data <- subset(baseline_df[index, ], select=-c(`from_name`,
-#                                                      `to_name`,
-#                                                      `num_common_genre`,
-#                                                      `from_salesrank`,
-#                                                      `from_rating`,
-#                                                      `from_reviews`,
-#                                                      `to_salesrank`,
-#                                                      `to_rating`,
-#                                                      `to_reviews`
-#                                                      ))
-# 
-# test_data <- subset(baseline_df[-index, ], select=-c(`from_name`,
-#                                                      `to_name`,
-#                                                      `num_common_genre`,
-#                                                      `from_salesrank`,
-#                                                      `from_rating`,
-#                                                      `from_reviews`,
-#                                                      `to_salesrank`,
-#                                                      `to_rating`,
-#                                                      `to_reviews`
-#                                                      ))
-# 
-# # converting dependent variable to factor as many packages require to be in factor
-# train_data$is_connected <- as.factor(train_data$connected)
-# test_data$is_connected <- as.factor(test_data$connected)
-# 
-# print(paste("Number of positive class in train data:", sum(train_data$connected == 1)))
-# print(paste("Number of negative class in original data:", sum(train_data$connected == 0)))
-# 
-# # downsampling of the majority class for TRAIN set only. Cannot touch TEST set.
-# downsampled_data <- downSample(train_data[, -which(names(train_data) == "is_connected")], train_data$is_connected)
-
-```
-
-```{r scaling_data}
-# # scaling train data
-# x_var_train <- downsampled_data[, !(names(downsampled_data) %in% c("is_connected", "V1", "V2"))]
-# scaled_x_train <- scale(x_var_train)
-# downsampled_data <- cbind(scaled_x_train, is_connected = downsampled_data$is_connected, V1 = downsampled_data$V1, V2 = downsampled_data$V2)
-# 
-# # we are only interested in the POSITIVE classes of the test data. We evaluate model based on the accuracy in predicting positive class only. We do not care about the negative class. Hence, metrics like ROC-AUC, confusion matrix etc will no longer be necessary.
-# 
-# test_data_positive <- test_data[test_data$is_connected==1,]
-# x_var_test <- test_data_positive[, !(names(test_data_positive) %in% c("is_connected", "V1", "V2"))]
-# scaled_x_test <- scale(x_var_test)
-# test_data_positive <- cbind(scaled_x_test, is_connected = test_data_positive$is_connected, 
-#                             V1 = test_data_positive$V1, V2 = test_data_positive$V2)
-# nrow(test_data_positive)
-# 
-# # converting back to dataframe
-# downsampled_data <- data.frame(downsampled_data)
-# test_data_positive <- data.frame(test_data_positive)
-# 
-# # converting the dependent variable to 0 and 1; somehow it changed to 1 and 2
-# downsampled_data$is_connected <- downsampled_data$is_connected - 1
-# test_data_positive$is_connected <- test_data_positive$is_connected - 1
-# downsampled_data$is_connected <- as.factor(downsampled_data$is_connected)
-# test_data_positive$is_connected <- as.factor(test_data_positive$is_connected)
-```
 
 
 ```{r creating_baseline_model}
 # First create a baseline model: Logistic regression. It is chosen for its simplicity and easy interpretability. Come up with a baseline model first without any feature selection or hyperparameter tuning first and see performance.
 
-# training data for logit: Drop V1 and V2 column
-baseline_logit_data <- downsampled_data %>% select(-V1, -V2)
-baseline_logit_model <- glm(is_connected ~ ., data = baseline_logit_data, 
-                            family = binomial(link = "logit"))
+
 
 # Summary of the model
 summary(baseline_logit_model)
@@ -212,152 +93,31 @@ summary(baseline_logit_model)
 
 
 ```{r baseline_model_performance}
-# dropping V1 and V2 for test data
-baseline_logit_test_data <- test_data_positive %>% select(-V1, -V2)
 
-# predictions
-predicted_probs <- predict(baseline_logit_model, 
-                           newdata = baseline_logit_test_data, type = "response")
-threshold <- 0.5
-predicted_classes <- ifelse(predicted_probs > threshold, 1, 0)
-
-# accuracy
-accuracy = sum(predicted_classes == 1) / nrow(test_data_positive)
-# Print the accuracy
-print(paste("Accuracy of baseline model", accuracy))
-
-
-# # Confusion matrix
-# confusion <- confusionMatrix(as.factor(predicted_classes), as.factor(test_data_positive$is_connected))
-# print(confusion)
-# 
-# # ROC curve and AUC
-# roc_obj <- roc(test_data_positive$is_connected, predicted_probs)
-# auc(roc_obj)
-# plot(roc_obj, main="ROC curve", col="blue", lwd=2)
 
 ```
 
 
 ```{r node_attributes}
 
-# store attributes into a data.frame
-node_attributes_df=data.frame(vertex_id=V(g)$name, 
-                              degree = degree(g),
-                              closeness=closeness(g, mode='all'),
-                              betweenness=betweenness(g, directed=FALSE),
-                              transitivity=transitivity(g, type = "local"), # There are many NaN transitivity values; it means these nodes are isolated? What the heck suddenly there are no more NaN values??
-                              eigencentrality = eigen_centrality(g)$vector,
-                              pagerank = page_rank(g)$vector,
-                              component_membership = components(g)$membership) #should we specify weakly or strongly connected component?
-
-# replacing NaN transitivity with value = 2 and treat it as a continuous variable first. Alternatively, we could also just one hot encode the transitivity column and treat it as a categorical variable
-node_attributes_df$transitivity[is.na(node_attributes_df$transitivity)] <- 2
-
-head(node_attributes_df)
-
-# scaling the node attributes dataframe
-scaled_node_attributes_df <- node_attributes_df %>% select(-vertex_id) %>% scale() %>% as.data.frame() %>% cbind(vertex_id = node_attributes_df$vertex_id)
 ```
 
 ```{r merging_baseline_dataset_node_attributes}
-## downsampled_data vertex ids are currently in int format. Convert to chr for left_join(), then convert back to int before model training
 
-downsampled_data_2 = downsampled_data
-
-downsampled_data_2$V1 = as.character(downsampled_data_2$V1)
-downsampled_data_2$V2 = as.character(downsampled_data_2$V2)
-
-merged_data <- downsampled_data_2 %>% 
-  left_join(scaled_node_attributes_df %>% 
-              select(vertex_id, degree, closeness, betweenness, 
-                     transitivity, eigencentrality, pagerank, component_membership) %>% 
-              rename(V1_degree = degree, 
-                     V1_closeness = closeness, 
-                     V1_betweenness = betweenness,
-                     V1_transitivity = transitivity, 
-                     V1_eigencentrality = eigencentrality, 
-                     V1_pagerank = pagerank, 
-                     V1_component_membership = component_membership), 
-            by = c("V1" = "vertex_id")) %>% 
-  left_join(scaled_node_attributes_df %>% select(vertex_id, degree, 
-                                          closeness, betweenness, 
-                                          transitivity, eigencentrality,
-                                          pagerank, component_membership) %>% 
-              rename(V2_degree = degree, V2_closeness = closeness, 
-                     V2_betweenness = betweenness, V2_transitivity = transitivity, 
-                     V2_eigencentrality = eigencentrality, V2_pagerank = pagerank, 
-                     V2_component_membership = component_membership), 
-            by = c("V2" = "vertex_id"))
-
-
-# dropping V1 and V2 from the merged data
-merged_data <- merged_data %>% select(-V1, -V2)
-head(merged_data)
 ```
 
 ```{r merged_model_training}
-merged_logit_model <- glm(is_connected ~ ., 
-                          data = merged_data, 
-                          family = binomial(link = "logit"))
 
-# Summary of the model
-summary(merged_logit_model)
 ```
 
 
 ```{r merging_baseline_dataset_node_attributes_test_set}
-# wr are only interested in the positive classes of the test data
-# need to leftjoin test data set also
-merged_test_data_positive <- test_data_positive
-merged_test_data_positive$V1 <- as.character(merged_test_data_positive$V1)
-merged_test_data_positive$V2 <- as.character(merged_test_data_positive$V2)
 
-merged_test_data_positive <- merged_test_data_positive %>% 
-  left_join(scaled_node_attributes_df %>% select(vertex_id, degree, closeness, 
-                                          betweenness, transitivity, eigencentrality, 
-                                          pagerank, component_membership) %>% 
-              rename(V1_degree = degree, V1_closeness = closeness, 
-                     V1_betweenness = betweenness, V1_transitivity = transitivity, 
-                     V1_eigencentrality = eigencentrality, V1_pagerank = pagerank, 
-                     V1_component_membership = component_membership), 
-            by = c("V1" = "vertex_id")) %>% 
-  left_join(scaled_node_attributes_df %>% select(vertex_id, degree, closeness,
-                                          betweenness, transitivity, eigencentrality, 
-                                          pagerank, component_membership) %>% 
-              rename(V2_degree = degree, V2_closeness = closeness, 
-                     V2_betweenness = betweenness, V2_transitivity = transitivity, 
-                     V2_eigencentrality = eigencentrality, V2_pagerank = pagerank, 
-                     V2_component_membership = component_membership), 
-            by = c("V2" = "vertex_id"))
-
- # dropping V1 and V2 columns
-merged_test_data_positive <- merged_test_data_positive %>% select(-V1, -V2)
-head(merged_test_data_positive)
 ```
 
 
 ```{r merged_model_performance}
-# predictions
-merged_predicted_probs <- predict(merged_logit_model, 
-                                  newdata = merged_test_data_positive, 
-                                  type = "response")
-threshold <- 0.5
-merged_predicted_classes <- ifelse(merged_predicted_probs > threshold, 1, 0)
 
-# accuracy
-merged_accuracy = sum(merged_predicted_classes == 1) / nrow(merged_test_data_positive)
-# Print the accuracy
-print(paste("Accuracy of baseline model", merged_accuracy))
-
-# # Confusion matrix
-# merged_confusion <- confusionMatrix(as.factor(merged_predicted_classes), as.factor(merged_test_data$is_connected))
-# print(merged_confusion)
-# 
-# # ROC curve and AUC
-# merged_roc_obj <- roc(merged_test_data$is_connected, merged_predicted_probs)
-# auc(merged_roc_obj)
-# plot(merged_roc_obj, main="ROC curve", col="blue", lwd=2)
 ```
 
 ```{r LASSO_feature_selection_hyperparameter_tuning}

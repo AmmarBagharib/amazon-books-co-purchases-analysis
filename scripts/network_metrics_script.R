@@ -6,7 +6,7 @@ setwd(here())
 
 ########################################################################
 # SPECIFY THE FILE NAME HERE
-graph_name <- '0302'
+graph_name <- '0505'
 
 # THEN RUN THE ENTIRE SCRIPT
 ########################################################################
@@ -137,6 +137,7 @@ final_df <- left_join(features_df, df, by=c("from_name"="vertex_name")) %>%
          'from_betweenness'='betweenness',
          'from_transitivity'='transitivity',
          'from_eigenvec_centrality'='eigenvec_centrality',
+         'from_pagerank'='pagerank',
          'from_community_membership'='community_membership') %>%
   
   left_join(df, by=c("to_name"="vertex_name")) %>%
@@ -145,6 +146,7 @@ final_df <- left_join(features_df, df, by=c("from_name"="vertex_name")) %>%
          'to_betweenness'='betweenness',
          'to_transitivity'='transitivity',
          'to_eigenvec_centrality'='eigenvec_centrality',
+         'to_pagerank'='pagerank',
          'to_community_membership'='community_membership') %>%
   
   mutate(same_community = as.integer(from_community_membership==to_community_membership)) 
