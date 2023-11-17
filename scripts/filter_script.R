@@ -14,7 +14,7 @@ setwd(here())
 
 ########################################################################
 # SPECIFY THE FILE NAME HERE
-graph_name <- "0302"
+graph_name <- "0505"
 num_months <- 31 #number of months between date of co purchases graph and 7th August 2006
 # THEN RUN THE ENTIRE SCRIPT
 ########################################################################
