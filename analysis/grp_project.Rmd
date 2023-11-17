@@ -50,112 +50,150 @@ we've filtered for such book-to-book co-purchases:
 set.seed(123)
 
 # Read the graph from the GraphML file
-g <- read_graph(here("outputs/filtered_graph_0601.graphml"), format = "graphml")
+# g <- read_graph(here("outputs/filtered_graph_0601.graphml"), format = "graphml")
 # read filtered book data
-books_df <- read.csv(here("outputs/book_filtered.csv"))
+baseline_0302 <- read.csv(here("outputs/baseline_features_0302.csv"))
+baseline_network_0302 <- read.csv(here("outputs/baseline_and_network_metrics_0302.csv"))
+
+baseline_0505 <- read.csv(here("outputs/baseline_features_0505.csv"))
+baseline_network_0505 <- read.csv(here("outputs/baseline_and_network_metrics_0505.csv"))
+
+baseline_0601 <- read.csv(here("outputs/baseline_features_0601.csv"))
 # changing id column and vertex ids from 'int' to 'chr' dtype
 #books_df$id <- as.character(books_df$id)
 
-g
+# g
 
-head(books_df)
+# Names of data frames
+data_frame_names <- c("baseline_0302", "baseline_network_0302", "baseline_0505", "baseline_network_0505", "baseline_0601")
+
+# Print the head of each data frame
+for (df_name in data_frame_names) {
+  print(head(get(df_name)))
+}
+
 ```
+
+```{r scaling_dataset_function}
+scale_dataset <- function(df, dependent_var = 'connected') {
+  independent_vars <- setdiff(names(df), dependent_var)
+  
+  # Scale the independent variables
+  df[independent_vars] <- scale(df[independent_vars])
+  
+  # Ensure the dependent variable is a factor if it's not already
+  df[[dependent_var]] <- as.factor(df[[dependent_var]])
+  
+  return(df)
+}
+
+
+scaled_baseline_0302 <- scale_dataset(baseline_0302)
+scaled_baseline_network_0302 <- scale_dataset(baseline_network_0302)
+
+scaled_baseline_0505 <- scale_dataset(baseline_0505)
+scaled_baseline_network_0505 <- scale_dataset(baseline_network_0505)
+scaled_baseline_0601 <- scale_dataset(baseline_0601)
+
+```
+
 
 ```{r appending_features_to_baseline_dataset}
-baseline_df <- read.csv('../data/baseline_dataset.csv')
-
-# append book 1 and 2 attributes
-baseline_df <- baseline_df %>%
-  
-  left_join(books_df %>%
-              select(id, first_genre, cleaned_genres, 
-                     num_main_genres, rating, reviews, salesrank) %>%
-              rename(V1_rating = rating, V1_reviews = reviews, 
-                     V1_salesrank = salesrank, V1_first_genre = first_genre,
-                     V1_genres = cleaned_genres, V1_num_main_genres = num_main_genres),
-            by  = c("V1" = "id")) %>%
-  
-  left_join(books_df %>%
-              select(id, first_genre, cleaned_genres, 
-                     num_main_genres, rating, reviews, salesrank) %>%
-              rename(V2_rating = rating, V2_reviews = reviews, 
-                     V2_salesrank = salesrank, V2_first_genre = first_genre, 
-                     V2_genres = cleaned_genres, V2_num_main_genres = num_main_genres),
-            by  = c("V2" = "id")) %>%
-  # append is_common first genre column
-  mutate(is_common_main_genre = as.integer(V1_first_genre == V2_first_genre))
+# baseline_df <- read.csv('../data/baseline_dataset.csv')
+# 
+# # append book 1 and 2 attributes
+# baseline_df <- baseline_df %>%
+#   
+#   left_join(books_df %>%
+#               select(id, first_genre, cleaned_genres, 
+#                      num_main_genres, rating, reviews, salesrank) %>%
+#               rename(V1_rating = rating, V1_reviews = reviews, 
+#                      V1_salesrank = salesrank, V1_first_genre = first_genre,
+#                      V1_genres = cleaned_genres, V1_num_main_genres = num_main_genres),
+#             by  = c("V1" = "id")) %>%
+#   
+#   left_join(books_df %>%
+#               select(id, first_genre, cleaned_genres, 
+#                      num_main_genres, rating, reviews, salesrank) %>%
+#               rename(V2_rating = rating, V2_reviews = reviews, 
+#                      V2_salesrank = salesrank, V2_first_genre = first_genre, 
+#                      V2_genres = cleaned_genres, V2_num_main_genres = num_main_genres),
+#             by  = c("V2" = "id")) %>%
+#   # append is_common first genre column
+#   mutate(is_common_main_genre = as.integer(V1_first_genre == V2_first_genre))
 
 ```
 
 
-```{r downsampling_baseline_dataset}
-class_proportions <- baseline_df %>% group_by(is_connected) %>% tally()
-print(class_proportions)
-# The dataset is highly imbalanced and this needs to be handled as if it is not dealt with properly, the algorithm will not be able to learn the characteristics of the minority class properly. Therefore, up-sampling or down-sampling techniques can be used to ensure equal or more balanced proportions between the two classes.
+```{r splitting_baseline_dataset}
+# # class_proportions <- baseline_df %>% group_by(is_connected) %>% tally()
+# # print(class_proportions)
+# # # The dataset is highly imbalanced and this needs to be handled as if it is not dealt with properly, the algorithm will not be able to learn the characteristics of the minority class properly. Therefore, up-sampling or down-sampling techniques can be used to ensure equal or more balanced proportions between the two classes.
+# 
+# 
+# # Code to split into training and test data
+# set.seed(123)  
+# # This function ensures automatically that class proportions are maintained
+# index <- createDataPartition(baseline_df$connected, p = 0.7, list = FALSE)
+# 
+# train_data <- subset(baseline_df[index, ], select=-c(`from_name`,
+#                                                      `to_name`,
+#                                                      `num_common_genre`,
+#                                                      `from_salesrank`,
+#                                                      `from_rating`,
+#                                                      `from_reviews`,
+#                                                      `to_salesrank`,
+#                                                      `to_rating`,
+#                                                      `to_reviews`
+#                                                      ))
+# 
+# test_data <- subset(baseline_df[-index, ], select=-c(`from_name`,
+#                                                      `to_name`,
+#                                                      `num_common_genre`,
+#                                                      `from_salesrank`,
+#                                                      `from_rating`,
+#                                                      `from_reviews`,
+#                                                      `to_salesrank`,
+#                                                      `to_rating`,
+#                                                      `to_reviews`
+#                                                      ))
+# 
+# # converting dependent variable to factor as many packages require to be in factor
+# train_data$is_connected <- as.factor(train_data$connected)
+# test_data$is_connected <- as.factor(test_data$connected)
+# 
+# print(paste("Number of positive class in train data:", sum(train_data$connected == 1)))
+# print(paste("Number of negative class in original data:", sum(train_data$connected == 0)))
+# 
+# # downsampling of the majority class for TRAIN set only. Cannot touch TEST set.
+# downsampled_data <- downSample(train_data[, -which(names(train_data) == "is_connected")], train_data$is_connected)
 
-
-# Code to split into training and test data
-set.seed(123)  
-# This function ensures automatically that class proportions are maintained
-index <- createDataPartition(baseline_df$is_connected, p = 0.7, list = FALSE)
-
-train_data <- subset(baseline_df[index, ], select=-c(`V1_first_genre`,
-                                                     `V1_genres`,
-                                                     `V2_first_genre`,
-                                                     `V2_genres`,
-                                                     `num_common_genre`
-                                                     ))
-
-test_data <- subset(baseline_df[-index, ], select=-c(`V1_first_genre`,
-                                                     `V1_genres`,
-                                                     `V2_first_genre`,
-                                                     `V2_genres`,
-                                                     `num_common_genre`
-                                                     ))
-
-# converting dependent variable to factor as many packages require to be in factor
-train_data$is_connected <- as.factor(train_data$is_connected)
-test_data$is_connected <- as.factor(test_data$is_connected)
-
-print(paste("Number of positive class in train data:", sum(train_data$is_connected == 1)))
-print(paste("Number of negative class in original data:", sum(train_data$is_connected == 0)))
-
-# downsampling of the majority class for TRAIN set only. Cannot touch TEST set.
-downsampled_data <- downSample(train_data[, -which(names(train_data) == "is_connected")], train_data$is_connected)
-
-# need to rename the "is_connected" column
-colnames(downsampled_data)[colnames(downsampled_data) == "Class"] <- "is_connected"
-
-print(paste("Number of positive class in downsampled data:", sum(downsampled_data$is_connected == 1)))
-print(paste("Number of negative class in downsampled data:", sum(downsampled_data$is_connected == 0)))
-
-head(downsampled_data)
 ```
 
 ```{r scaling_data}
-# scaling train data
-x_var_train <- downsampled_data[, !(names(downsampled_data) %in% c("is_connected", "V1", "V2"))]
-scaled_x_train <- scale(x_var_train)
-downsampled_data <- cbind(scaled_x_train, is_connected = downsampled_data$is_connected, V1 = downsampled_data$V1, V2 = downsampled_data$V2)
-
-# we are only interested in the POSITIVE classes of the test data. We evaluate model based on the accuracy in predicting positive class only. We do not care about the negative class. Hence, metrics like ROC-AUC, confusion matrix etc will no longer be necessary.
-
-test_data_positive <- test_data[test_data$is_connected==1,]
-x_var_test <- test_data_positive[, !(names(test_data_positive) %in% c("is_connected", "V1", "V2"))]
-scaled_x_test <- scale(x_var_test)
-test_data_positive <- cbind(scaled_x_test, is_connected = test_data_positive$is_connected, 
-                            V1 = test_data_positive$V1, V2 = test_data_positive$V2)
-nrow(test_data_positive)
-
-# converting back to dataframe
-downsampled_data <- data.frame(downsampled_data)
-test_data_positive <- data.frame(test_data_positive)
-
-# converting the dependent variable to 0 and 1; somehow it changed to 1 and 2
-downsampled_data$is_connected <- downsampled_data$is_connected - 1
-test_data_positive$is_connected <- test_data_positive$is_connected - 1
-downsampled_data$is_connected <- as.factor(downsampled_data$is_connected)
-test_data_positive$is_connected <- as.factor(test_data_positive$is_connected)
+# # scaling train data
+# x_var_train <- downsampled_data[, !(names(downsampled_data) %in% c("is_connected", "V1", "V2"))]
+# scaled_x_train <- scale(x_var_train)
+# downsampled_data <- cbind(scaled_x_train, is_connected = downsampled_data$is_connected, V1 = downsampled_data$V1, V2 = downsampled_data$V2)
+# 
+# # we are only interested in the POSITIVE classes of the test data. We evaluate model based on the accuracy in predicting positive class only. We do not care about the negative class. Hence, metrics like ROC-AUC, confusion matrix etc will no longer be necessary.
+# 
+# test_data_positive <- test_data[test_data$is_connected==1,]
+# x_var_test <- test_data_positive[, !(names(test_data_positive) %in% c("is_connected", "V1", "V2"))]
+# scaled_x_test <- scale(x_var_test)
+# test_data_positive <- cbind(scaled_x_test, is_connected = test_data_positive$is_connected, 
+#                             V1 = test_data_positive$V1, V2 = test_data_positive$V2)
+# nrow(test_data_positive)
+# 
+# # converting back to dataframe
+# downsampled_data <- data.frame(downsampled_data)
+# test_data_positive <- data.frame(test_data_positive)
+# 
+# # converting the dependent variable to 0 and 1; somehow it changed to 1 and 2
+# downsampled_data$is_connected <- downsampled_data$is_connected - 1
+# test_data_positive$is_connected <- test_data_positive$is_connected - 1
+# downsampled_data$is_connected <- as.factor(downsampled_data$is_connected)
+# test_data_positive$is_connected <- as.factor(test_data_positive$is_connected)
 ```
 
 
