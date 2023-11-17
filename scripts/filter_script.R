@@ -14,7 +14,7 @@ setwd(here())
 
 ########################################################################
 # SPECIFY THE FILE NAME HERE
-graph_name <- "0302"
+graph_name <- "0601"
 num_months <- 31 #number of months between date of co purchases graph and 7th August 2006
 # THEN RUN THE ENTIRE SCRIPT
 ########################################################################
@@ -71,7 +71,8 @@ g_df$to_name <- as.integer(g_df$to_name)
 
 g_df_filtered <- inner_join(g_df, book_filtered[, c("id")], by = c("from_name" = "id")) %>%
   # inner join once more for valid "to" books
-  inner_join(., book_filtered[, c("id")], by = c("to_name" = "id"))
+  inner_join(., book_filtered[, c("id")], by = c("to_name" = "id")) %>%
+  mutate(connected=1)
 
 nodes <- union(g_df_filtered$from_name, g_df_filtered$to_name)
 length(nodes)
@@ -84,32 +85,37 @@ dim(g_df_filtered)
 ########################################################################
 # PRODUCING NEGATIVE COMBINATIONS
 
-# Check combinations of links
-g_filtered <- graph_from_data_frame(g_df_filtered)
+if (graph_name != "0601"){
+  # Check combinations of links
+  g_filtered <- graph_from_data_frame(g_df_filtered)
+  
+  # Extract the set of nodes from your original graph
+  sample_nodes <- V(g_filtered) %>% as_ids()
+  
+  # Generate pairs of nodes that are not connected
+  non_connected_pairs <- expand.grid(from = sample_nodes, to = sample_nodes) %>%
+    filter(!are.connected(g_filtered, from, to) & from != to)
+  
+  # Sample a subset to match the size of the original g_df_filtered dataset
+  set.seed(123)  # Set seed for reproducibility
+  non_connected_pairs_subset <- non_connected_pairs[sample(nrow(non_connected_pairs), nrow(g_df_filtered)), ]
+  
+  # Create instances with connected == 0
+  non_connected_data <- data.frame(
+    from_name = non_connected_pairs_subset$from,
+    to_name = non_connected_pairs_subset$to,
+    connected = 0
+  )
+  
+  # Combine with your original data
+  g_final_df <- rbind(g_df_filtered, non_connected_data) %>% 
+    mutate(from_name = as.numeric(from_name), to_name = as.numeric(to_name))
+} else if (graph_name == "0601") {
+  g_final_df <- g_df_filtered
+} else {
+  print("invalid graph name")
+}
 
-g_df_filtered$connected <- 1
-
-# Extract the set of nodes from your original graph
-sample_nodes <- V(g_filtered) %>% as_ids()
-
-# Generate pairs of nodes that are not connected
-non_connected_pairs <- expand.grid(from = sample_nodes, to = sample_nodes) %>%
-  filter(!are.connected(g_filtered, from, to) & from != to)
-
-# Sample a subset to match the size of the original g_df_filtered dataset
-set.seed(123)  # Set seed for reproducibility
-non_connected_pairs_subset <- non_connected_pairs[sample(nrow(non_connected_pairs), nrow(g_df_filtered)), ]
-
-# Create instances with connected == 0
-non_connected_data <- data.frame(
-  from_name = non_connected_pairs_subset$from,
-  to_name = non_connected_pairs_subset$to,
-  connected = 0
-)
-
-# Combine with your original data
-g_final_df <- rbind(g_df_filtered, non_connected_data) %>% 
-  mutate(from_name = as.numeric(from_name), to_name = as.numeric(to_name))
 
 ########################################################################
 ########################################################################
