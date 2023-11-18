@@ -46,32 +46,98 @@ we've filtered for such book-to-book co-purchases:
 1. With average reviews > 1 in 31 month period (for both books)
 2. in a co-purchase, both books have a valid genre i.e., not an empty string
 
-```{r load-models}
+```{r load-models-and-test}
 set.seed(123)
+######################################################################
+# test data using 0302 network metrics
+# test data
+test_0601_0302 <- read.csv(here('outputs/scaled_test_0302.csv'))
+
+####0302
 # model 1: baseline features only
-model1_0302 <- readRDS(here("outputs/ml_models/logistic_model1_0302.rds"))
+model1_0302 <- readRDS(here("outputs/ml_models/scaled_logistic_model1_0302.rds"))
+
+test_1_0302 <- test_0601_0302[colnames(test_0601_0302)[3:10]]
 
 # model 2: network metrics only
-model2_0302 <- readRDS(here("outputs/ml_models/logistic_model2_0302.rds"))
+model2_0302 <- readRDS(here("outputs/ml_models/scaled_logistic_model2_0302.rds"))
+
+test_2_0302 <- test_0601_0302[colnames(test_0601_0302)[c(3, c(11:23))]]
 
 # model 3: baseline features + network metrics
-model3_0302 <- readRDS(here("outputs/ml_models/logistic_model3_0302.rds"))
+model3_0302 <- readRDS(here("outputs/ml_models/scaled_logistic_model3_0302.rds"))
 
-# model 1: baseline features only
-model1_0505 <- readRDS(here("outputs/ml_models/logistic_model1_0505.rds"))
-
-# model 2: network metrics only
-model2_0505 <- readRDS(here("outputs/ml_models/logistic_model2_0505.rds"))
-
-# model 3: baseline features + network metrics
-model3_0505 <- readRDS(here("outputs/ml_models/logistic_model3_0505.rds"))
+test_3_0302 <- test_0601_0302[colnames(test_0601_0302)[3:23]]
 
 # test data
-test_0601_0302 <- read.csv(here('outputs/baseline_0601_and_0302_network_metrics.csv'))
+test_0601_0302 <- read.csv(here('outputs/scaled_test_0302.csv'))
+
+######################################################################
+# test data using 0505 network metrics
+####0302
+test_0601_0505 <- read.csv(here('outputs/scaled_test_0505.csv'))
+
+# model 1: baseline features only
+model1_0505 <- readRDS(here("outputs/ml_models/scaled_logistic_model1_0505.rds"))
+
+test_1_0505 <- test_0601_0302[colnames(test_0601_0505)[3:10]]
+
+# model 2: network metrics only
+model2_0505 <- readRDS(here("outputs/ml_models/scaled_logistic_model2_0505.rds"))
+
+test_2_0505 <- test_0601_0302[colnames(test_0601_0505)[c(3, c(11:23))]]
+
+# model 3: baseline features + network metrics
+model3_0505 <- readRDS(here("outputs/ml_models/scaled_logistic_model3_0505.rds"))
+
+test_3_0505 <- test_0601_0505[colnames(test_0601_0505)[3:23]]
+
 ```
 
-```{r models_accuracy}
+```{r function_accuracy}
+# helper function to calculate accuracy
+calculate_accuracy <- function(model, test_data) {
+  predictions <- predict(model, newdata = test_data, type = "response")
+ # print(head(predictions))  # Print the first few predictions for debugging
+  predicted_classes <- ifelse(predictions > 0.5, 1, 0)
+  #print(predicted_classes)  # Print the first few predicted classes for debugging
+  accuracy <- mean(predicted_classes == test_data$connected, na.rm = TRUE)
+  return(accuracy)
+}
 
+model_names <- list("baseline 0302", "network metrics 0302", "baseline + network metrics 0302", 
+                "baseline 0505", "network metrics 0505", "baseline + network metrics 0505")
+
+model_list <- list(model1_0302, model2_0302, model3_0302, 
+                model1_0505, model2_0505, model3_0505)
+
+test_list <- list(test_1_0302, test_2_0302, test_3_0302,
+               test_1_0505, test_2_0505, test_3_0505)
+```
+
+
+```{r models_accuracy}
+# Create an empty dataframe to store results
+results_df <- data.frame(Model = character(), Accuracy = numeric(), stringsAsFactors = FALSE)
+
+# Loop over models and tests
+for (i in seq_along(model_list)) {
+  model <- model_list[[i]]
+  test_data <- test_list[[i]]
+  model_name <- model_names[[i]]
+  
+  # Calculate accuracy using the helper function
+  accuracy <- calculate_accuracy(model, test_data)
+  #print(accuracy)
+  #print(model_name)
+  
+  results_row <- data.frame(Model = model_name, Accuracy = accuracy)
+  # Store results in the dataframe
+  results_df <- bind_rows(results_df, results_row)
+}
+
+# Print or inspect the results dataframe
+results_df
 
 ```
 
@@ -177,8 +243,8 @@ To enable us to compute some of the key network metrics efficiently, we opted to
 sampled_metrics <- read.csv(here("outputs/network_metrics_0302.csv"))
 
 #load original network and calculate deg and local transitivity
-original_0302 <- read.table(here("data/Amazon0302.txt"))
-original_0302_graph <- graph_from_data_frame(original_0302, directed = FALSE)
+original_0302 <- read.table("../data/Amazon0302.txt")
+original_0302_graph <- simplify(graph_from_data_frame(original_0302, directed = FALSE))
 original_deg <- degree(original_0302_graph)
 original_trans <- transitivity(original_0302_graph, type = "local")
 
