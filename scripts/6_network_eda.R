@@ -83,7 +83,7 @@ g1 <- arrangeGrob(sampled_gr_deg, orig_gr_deg, sampled_gr_trans, orig_gr_trans, 
 ggsave(file=here("outputs/plots_and_tables/1_combined_plot.png"), 
        plot=g1,
        width = 8,
-       height = 8,
+       height = 3,
        units = "in",
        dpi = 300
        ) #saves g
