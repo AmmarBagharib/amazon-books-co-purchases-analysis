@@ -22,6 +22,10 @@ scale_dataset <- function(df, dependent_var = 'connected') {
 train_0302 <- read.csv(here('outputs/baseline_and_network_metrics_0302.csv'))
 ########################################################################
 
+# Replacing NA values for 'transitivity' columns with the value -1.
+train_0302$from_transitivity[is.na(train_0302$from_transitivity)] <- 0.1
+train_0302$to_transitivity[is.na(train_0302$to_transitivity)] <- 0.1
+
 # scaling the dataset first
 scaled_train_0302 <- scale_dataset(train_0302)
 
@@ -73,6 +77,10 @@ saveRDS(model3, file = here("outputs/ml_models/scaled_logistic_model3_0302.rds")
 ########################################################################
 # LOAD 0505 train full data
 train_0505 <- read.csv(here('outputs/baseline_and_network_metrics_0505.csv'))
+
+# Replacing NA values for 'transitivity' columns with the value -1.
+train_0505$from_transitivity[is.na(train_0505$from_transitivity)] <- 0.1
+train_0505$to_transitivity[is.na(train_0505$to_transitivity)] <- 0.1
 
 # scaling the dataset
 scaled_train_0505 <- scale_dataset(train_0505)
