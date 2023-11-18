@@ -130,7 +130,7 @@ model2_0505 <- glm(connected ~ ., data = scaled_train_0505_model2, family = "bin
 saveRDS(model2_0505, file = here("outputs/ml_models/scaled_logistic_model2_0505.rds"))
 
 # Model 3: Using all features
-model3_0505 <- glm(connected ~ ., data = scaled_train_0302[3:23], family = "binomial")
+model3_0505 <- glm(connected ~ ., data = scaled_train_0505[3:23], family = "binomial")
 
 saveRDS(model3_0505, file = here("outputs/ml_models/scaled_logistic_model3_0505.rds"))
 
