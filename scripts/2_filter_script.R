@@ -7,15 +7,21 @@ library(igraph)
 library(data.table)
 library(here)
 library(dplyr)
-library(caret)
-library(pROC)
 setwd(here())
 
 
 ########################################################################
 # SPECIFY THE FILE NAME HERE
 graph_name <- "0601"
-num_months <- 31 #number of months between date of co purchases graph and 7th August 2006
+
+#number of months between date of co purchases graph and 7th August 2006
+if (graph_name=="0302"){
+  num_months <- 41
+} else if (graph_name == "0505"){
+  num_months <- 39
+} else if (graph_name == "0601"){
+  num_months <- 38
+}
 # THEN RUN THE ENTIRE SCRIPT
 ########################################################################
 
