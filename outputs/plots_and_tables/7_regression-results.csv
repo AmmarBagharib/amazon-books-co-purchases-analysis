@@ -1,0 +1,5 @@
+"Model","Accuracy"
+"baseline 0302",0.449181117533719
+"network metrics 0302",0.493256262042389
+"baseline + network metrics 0302",0.487957610789981
+"network metrics 0505",0.618015414258189

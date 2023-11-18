@@ -11,7 +11,7 @@ setwd(here())
 
 ########################################################################
 # SPECIFY THE FILE NAME HERE
-graph_name <- '0505'
+graph_name <- '0302'
 
 # THEN RUN THE ENTIRE SCRIPT
 ########################################################################
@@ -71,6 +71,9 @@ if (!all_nodes_present) {
 } else {
   cat("All nodes are present in g_filtered.\n")
 }
+
+write_graph(g_filtered, file = here("outputs/sample_graph_0302.graphml"), format = "graphml")
+
 
 start_time <- Sys.time()
 

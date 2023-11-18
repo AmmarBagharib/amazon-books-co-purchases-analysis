@@ -1,0 +1,62 @@
+\RequirePackage{filecontents}
+\begin{filecontents}{references.bib}
+@article{knox2023biographies,
+  title={Why are biographies so popular? Because humans are enthralled by the lives of others},
+  author={Knox, C.},
+  year={2023},
+  month={May},
+  day={9},
+  journal={The Guardian},
+  url={https://www.theguardian.com/commentisfree/2023/may/09/biographies-popular-stories-true-books-boswell-book-festival}
+}
+
+@article{decuir2022audiobooks,
+  title={Why Audiobooks Are Skyrocketing, and How Writers Can Take Advantage in 2022},
+  author={DeCuir, M.},
+  year={2022},
+  month={March},
+  day={6},
+  journal={Writer’s Digest},
+  url={https://www.writersdigest.com/getting-published/why-audiobooks-are-skyrocketing-and-how-writers-can-take-advantage-in-2022}
+}
+
+@article{haveliwala2003topic,
+  title={Topic-sensitive PageRank: A context-sensitive ranking algorithm for Web search},
+  author={Haveliwala, T. H.},
+  year={2003},
+  month={August},
+  journal={IEEE},
+  url={https://www.researchgate.net/publication/3297186_Topic-sensitive_PageRank_A_context-sensitive_ranking_algorithm_for_Web_search}
+}
+
+@article{muralidharan2023decoding,
+  title={Decoding Amazon’s Recommendation System},
+  author={Muralidharan, G.},
+  year={2023},
+  month={September},
+  day={29},
+  journal={Argoid.ai},
+  url={https://www.argoid.ai/blog/decoding-amazons-recommendation-system}
+}
+
+\end{filecontents}
+
+\documentclass{scrreprt}
+
+\usepackage[ngerman]{babel}                    
+\usepackage[latin1]{inputenc}                
+\usepackage[T1]{fontenc}
+
+\usepackage[backend=biber]{biblatex}
+\usepackage{url}
+
+%%% --- The following two lines are what needs to be added --- %%%
+\setcounter{biburllcpenalty}{7000}
+\setcounter{biburlucpenalty}{8000}
+
+\bibliography{bachelorarbeit_lit}
+
+\begin{document}
+Test \cite{java96}
+\printbibliography
+\end{document}
