@@ -165,33 +165,67 @@ merged_df = books_df %>% mutate(id = as.character(id)) %>%
 head(merged_df)
 ```
 
-**2.1. Degree Centrality**
 
-The degree distribution of our network exhibits a power-law distribution, a characteristic often seen in naturally occurring networks. Majority of books in our network have low degree centrality, typically three or fewer connections. On the far right of the distribution, we observe a small group of books with 12 or more first-degree connections, indicating a significant influence on the purchase of other books.
+***Network Features in March***
 
-This suggests that most books within the network neither strongly influence the purchase of other books nor are significantly influenced by other books. Examining these high in-degree centrality outliers can provide valuable insights, which could allow us to formulate effective cross-selling strategies that enhance co-purchase tendencies.
+**2.1. Network Sampling**
 
-```{r deg_visualization, fig.width=15, fig.height=5}
-#function to plot histogram
-plot_hist <- function(g, title, x_label, y_label, log_scale = FALSE) {
-  labels <- labs(y = y_label, x = x_label, title = title)  # Added title parameter
-  graph <- ggplot() + geom_histogram(aes(x = g), bins = 10) + labels
-  
-  if (log_scale == TRUE) {
-    return(graph + ls)
-  } else {
-    return(graph)
-  }
-}
+To enable us to compute some of the key network metrics efficiently, we opted to randomly sample 100,000 nodes from the network. This approach offers a practical means of analysis while retaining a substantial portion of the network's complexity. As we can see in the figure below, the subgraph formed by our sampled nodes exhibits a degree and transitivity distribution that closely mirrors those of the original network. This congruence strongly suggests that the sampled network effectively captures the essential structural characteristics of the larger network.
 
-#calculate in, out and all degree centrality for each graph
-deg <- degree(g)
+```{r compare_structure,  fig.width=10, fig.height=5}
+#load network metrics for sampled 0302
+sampled_metrics <- read.csv(here("outputs/network_metrics_0302.csv"))
 
-#visualize
-plot_hist(deg, "degree distribution for 0302", "degree", "frequency")
+#load original network and calculate deg and local transitivity
+original_0302 <- read.table(here("data/Amazon0302.txt"))
+original_0302_graph <- graph_from_data_frame(original_0302, directed = FALSE)
+original_deg <- degree(original_0302_graph)
+original_trans <- transitivity(original_0302_graph, type = "local")
+
+#visualize distributions
+sampled_gr_deg <- ggplot(sampled_metrics, aes(x = degree)) + 
+  geom_histogram(bins = 7) + 
+  scale_y_log10() + 
+  scale_x_log10() +
+  labs(title = "Sampled Graph", x = "log(Degree Centrality)", y = "log(Frequency)")
+orig_gr_deg <- ggplot() + 
+  geom_histogram(bins = 7, aes(x = original_deg)) + 
+  scale_y_log10() +
+  scale_x_log10() +
+  labs(title = "Original Graph", x = "log(Degree Centrality)", y = "log(Frequency)")
+
+sampled_gr_trans <- ggplot(sampled_metrics, aes(x = transitivity)) + 
+  geom_histogram(bins = 7) + 
+  scale_y_log10() +
+  labs(title = "Sampled Graph", x = "Local Transitivity", y = "log(Frequency)")
+orig_gr_trans <- ggplot() + 
+  geom_histogram(bins = 7, aes(x = original_trans)) + 
+  scale_y_log10() +
+  labs(title = "Original Graph", x = "Local Transitivity", y = "log(Frequency)")
+
+
+#plot
+grid.arrange(sampled_gr_deg, orig_gr_deg, sampled_gr_trans, orig_gr_trans, ncol = 2)
 ```
 
+
 **2.2. Degree Centrality**
+
+Majority of books in our network have low degree centrality, with approximately 3 or fewer connections. On the far right of the distribution, we observe a small group of books with approximately 70 first-degree connections, indicating a significant influence on the purchase of other books.
+This suggests that most books within the network neither strongly influence the purchase of other books nor are significantly influenced by other books. Examining these high in-degree centrality outliers can provide valuable insights, which could allow us to formulate effective cross-selling strategies that enhance co-purchase tendencies.
+
+```{r deg_visualization, fig.width=10, fig.height=5}
+ggplot(sampled_metrics, aes(x = degree)) + 
+  geom_histogram() + 
+  labs(title = "Sampled Graph - Degree Distribution", x = "Degree Centrality", y = "log(Frequency)")
+```
+
+```{r high_degree_books}
+#view information on top n books based on degree centrality
+sampled_metrics %>% head()
+```
+
+**2.3. Degree Centrality**
 The low network density of 0.000598 in the network indicates that, relative to the total possible connections between books, there are very few actual co-purchases. This suggests that the network is quite sparse, with a limited number of co-purchases taking place.
 
 Global transitivity measures how likely the neighbors of two connected nodes are connected to each other. In the case of our co-purchase network, it measures the likelihood that the alters of two books which are co-purchased together are also co-purchased with each other. The moderate global transitivity value of 0.242 tells us that there is a noteworthy degree of clustering or transitivity within this sparse network. 
