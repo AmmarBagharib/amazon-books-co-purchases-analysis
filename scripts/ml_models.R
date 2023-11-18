@@ -79,7 +79,7 @@ saveRDS(model3, file = here("outputs/ml_models/scaled_logistic_model3_0302.rds")
 train_0505 <- read.csv(here('outputs/baseline_and_network_metrics_0505.csv'))
 
 colnames(train_0505)[colnames(train_0505) == "from_pagerank"] <- "pagerank.x"
-colnames(train_0505)[colnames(train_0505) == "to_pagerank"] <- "pagerank.x"
+colnames(train_0505)[colnames(train_0505) == "to_pagerank"] <- "pagerank.y"
 
 
 # Replacing NA values for 'transitivity' columns with the value -1.
