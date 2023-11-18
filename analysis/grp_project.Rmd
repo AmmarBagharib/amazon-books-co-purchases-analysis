@@ -220,19 +220,12 @@ ggplot(sampled_metrics, aes(x = degree)) +
   labs(title = "Sampled Graph - Degree Distribution", x = "Degree Centrality", y = "log(Frequency)")
 ```
 
-```{r high_degree_books}
-#view information on top n books based on degree centrality
-sampled_metrics %>% head()
-```
+**2.3. Transitivity and Density**
+With a global transitivity of 0.236, our co-purchase network demonstrates a moderate level of clustering, indicating that some books do tend to form clusters in terms of co-purchase behaviour.
 
-**2.3. Degree Centrality**
-The low network density of 0.000598 in the network indicates that, relative to the total possible connections between books, there are very few actual co-purchases. This suggests that the network is quite sparse, with a limited number of co-purchases taking place.
+Simultaneously, the network exhibits a low density of 0.0000359, signifying a sparse web of connections between products. This low density indicates that even though a small number of clusters exist, the overall network is not densely interconnected.
 
-Global transitivity measures how likely the neighbors of two connected nodes are connected to each other. In the case of our co-purchase network, it measures the likelihood that the alters of two books which are co-purchased together are also co-purchased with each other. The moderate global transitivity value of 0.242 tells us that there is a noteworthy degree of clustering or transitivity within this sparse network. 
-
-This means that, despite the overall sparsity, there is a tendency for co-purchased books to have shared co-purchases with other books in the network. In simpler terms, when two books are co-purchased together, there is a relatively higher likelihood that other books co-purchased with those two are also co-purchased with each other. 
-
-This suggests that there are distinct co-purchase patterns or niche markets within the network. Products within these clusters frequently co-purchase with each other, even if the overall network is not densely interconnected.
+Taken together, this means that books within the network are not frequently co-purchased together, and individual products seem to have limited influence on the purchasing behaviour of others. This disconnectedness further highlights the challenge in seeking out cross-selling opportunities, as there are few evident connections or influences between various types of books.
 
 ```{r density_trans_original}
 global_transitivity = transitivity(original_0302_graph, type="global")
@@ -240,25 +233,37 @@ density = graph.density(original_0302_graph)
 print(paste("global transitivity:", global_transitivity, "| density:", density))
 ```
 
-# Clusters
-
-```{r component, fig.width = 15, fig.height = 10}
-#get largest component
-comps <- clusters(g)
-largest_comp_ind <- which.max(comps$csize)
-largest_comp_vert <- which(comps$membership == largest_comp_ind)
-largest_comp_subg <- induced_subgraph(g, largest_comp_vert)
-
-#visualize largest component
-plot(largest_comp_subg, layout = layout.fruchterman.reingold(g), vertex.size = degree(largest_comp_subg))
-#degree distribution for sampled graph
-plot_hist(degree(g), "Degree Centrality distribution for sampled graph", "degree centrality", "frequency", log_scale = FALSE)
-#degree distribution for largest component
-plot_hist(degree(largest_comp_subg), "Degree Centrality distribution for largest component", "degree centrality", "frequency", log_scale = FALSE)
+**2.4. PageRank**
+```{r pagerank, fig.width = 10, fig.height = 5}
+#visualize distribution of pagerank
+ggplot(sampled_metrics) + 
+  geom_histogram(aes(x = pagerank)) + 
+  scale_y_log10() +
+  labs(title = "Sampled Graph - Pagerank", x = "Pagerank", y = "log(Frequency)")
 ```
 
 
-# Clustering
+```{r pagerank_top_genres}
+#load book-specific features
+books_info <- read.csv(here("data/item_index_books.csv"))
+
+#left join books_info to sampled_metrics
+sampled_metrics <- sampled_metrics %>% left_join(., books_info, by = c("vertex_name"="id")) %>% arrange(desc(pagerank)) %>% distinct()
+
+#view top 20 books' pagerank
+sampled_metrics %>% head(20) %>% .[,c("vertex_name", "pagerank")]
+top_genres <- c()
+
+for (i in 1:100) {
+  vec = sampled_metrics$cleaned_genres[i] %>% strsplit(., "\\|")
+  top_genres <- c(top_genres, vec) %>% unlist()
+}
+
+#count genres in top 100 pagerank books
+res <- top_genres %>% table() %>% as.data.frame()
+colnames(res) <- c("Genre", "Count")
+res %>% arrange(desc(Count)) %>% .[3:13,]
+```
 
 Source Codes
 
