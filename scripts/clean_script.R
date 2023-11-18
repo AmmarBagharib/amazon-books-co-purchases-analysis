@@ -146,26 +146,23 @@ item_index_books$salesrank <- salesrank_ls
 
 ###############################################################################################################
 
-
+#save csv
+write.csv(item_index_books, "../data/item_index_books.csv", row.names = FALSE)
 
 ###############################################################################################################
+# book_data <- data.table(item_index_books)
 
-#save csv
-write.csv(item_index_books, "item_index_books.csv", row.names = FALSE)
-
-book_data <- data.table(read.csv("../data/item_index_books.csv"))
-
-# Split the 'cleaned_genres' column by '|' and extract the first genre
-book_data[, first_genre := sub("\\|.*", "", cleaned_genres)]
-
-# Get the counts of the first genre
-genre_counts <- book_data[, .N, by = first_genre]
-
-# Assuming 'genre_counts' contains the counts of each genre
-top_genres <- genre_counts[order(-N)][1:50]
-
-# Print or inspect the top 20 genres
-print(top_genres)
-#preview
-#item_index_books
+# # Split the 'cleaned_genres' column by '|' and extract the first genre
+# book_data[, first_genre := sub("\\|.*", "", cleaned_genres)]
+# 
+# # Get the counts of the first genre
+# genre_counts <- book_data[, .N, by = first_genre]
+# 
+# # Assuming 'genre_counts' contains the counts of each genre
+# top_genres <- genre_counts[order(-N)][1:50]
+# 
+# # Print or inspect the top 20 genres
+# print(top_genres)
+# #preview
+# #item_index_books
 ###############################################################################################################
