@@ -234,10 +234,10 @@ This means that, despite the overall sparsity, there is a tendency for co-purcha
 
 This suggests that there are distinct co-purchase patterns or niche markets within the network. Products within these clusters frequently co-purchase with each other, even if the overall network is not densely interconnected.
 
-```{r graph-attributes}
-global_transitivity = transitivity(g, type="global")
-density = graph.density(g)
-print(paste("The global transitivity of the graph is", global_transitivity, "and the graph density is", density))
+```{r density_trans_original}
+global_transitivity = transitivity(original_0302_graph, type="global")
+density = graph.density(original_0302_graph)
+print(paste("global transitivity:", global_transitivity, "| density:", density))
 ```
 
 # Clusters
