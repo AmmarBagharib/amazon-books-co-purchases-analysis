@@ -53,6 +53,12 @@ set.seed(123)
 # test data
 test_0601_0302 <- read.csv(here('outputs/scaled_test_0302.csv'))
 
+# transitivity and closeness related columns have NA values. Replace them with -1 value.
+test_0601_0302$from_transitivity[is.na(test_0601_0302$from_transitivity)] <- -1
+test_0601_0302$to_transitivity[is.na(test_0601_0302$to_transitivity)] <- -1
+test_0601_0302$from_closeness[is.na(test_0601_0302$from_closeness)] <- -1
+test_0601_0302$to_closeness[is.na(test_0601_0302$to_closeness)] <- -1
+
 ####0302
 # model 1: baseline features only
 model1_0302 <- readRDS(here("outputs/ml_models/scaled_logistic_model1_0302.rds"))
@@ -69,13 +75,16 @@ model3_0302 <- readRDS(here("outputs/ml_models/scaled_logistic_model3_0302.rds")
 
 test_3_0302 <- test_0601_0302[colnames(test_0601_0302)[3:23]]
 
-# test data
-test_0601_0302 <- read.csv(here('outputs/scaled_test_0302.csv'))
-
 ######################################################################
 # test data using 0505 network metrics
 ####0302
 test_0601_0505 <- read.csv(here('outputs/scaled_test_0505.csv'))
+
+# transitivity and closeness related columns have NA values. Replace them with -1 value.
+test_0601_0505$from_transitivity[is.na(test_0601_0302$from_transitivity)] <- -1
+test_0601_0505$to_transitivity[is.na(test_0601_0302$to_transitivity)] <- -1
+test_0601_0505$from_closeness[is.na(test_0601_0302$from_closeness)] <- -1
+test_0601_0505$to_closeness[is.na(test_0601_0302$to_closeness)] <- -1
 
 # model 1: baseline features only
 model1_0505 <- readRDS(here("outputs/ml_models/scaled_logistic_model1_0505.rds"))
