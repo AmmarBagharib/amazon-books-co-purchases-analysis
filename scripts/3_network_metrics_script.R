@@ -1,3 +1,8 @@
+########################################################################
+#This script outputs 1 file:
+# 1. a csv file containing the the baseline features of the graph we're working with, 
+# along with network metrics
+# baseline features include only book related features
 library(igraph)
 library(data.table)
 library(here)
@@ -6,7 +11,7 @@ setwd(here())
 
 ########################################################################
 # SPECIFY THE FILE NAME HERE
-graph_name <- '0302'
+graph_name <- '0505'
 
 # THEN RUN THE ENTIRE SCRIPT
 ########################################################################
