@@ -30,9 +30,9 @@ sampled_gr_deg <- ggplot(sampled_metrics, aes(x = degree)) +
   theme(axis.text.x = element_text(size = font_size),   # Adjust x-axis label size
         axis.text.y = element_text(size = font_size),
         axis.title.x = element_text(size = title_font),  # Adjust x-axis title size
-        axis.title.y = element_text(size = title_font),
-        plot.background = element_rect(fill = "white"),
-        panel.background = element_rect(fill = "white"))
+        axis.title.y = element_text(size = title_font))
+        #plot.background = element_rect(fill = "white"),
+        #panel.background = element_rect(fill = "white"))
 
 
 orig_gr_deg <- ggplot() + 
@@ -44,9 +44,9 @@ orig_gr_deg <- ggplot() +
   theme(axis.text.x = element_text(size = font_size),   # Adjust x-axis label size
         axis.text.y = element_text(size = font_size),
         axis.title.x = element_text(size = title_font),  # Adjust x-axis title size
-        axis.title.y = element_text(size = title_font),
-        plot.background = element_rect(fill = "white"),
-        panel.background = element_rect(fill = "white"))
+        axis.title.y = element_text(size = title_font))
+        #plot.background = element_rect(fill = "white"),
+        #panel.background = element_rect(fill = "white"))
 
 
 sampled_gr_trans <- ggplot(sampled_metrics, aes(x = transitivity)) + 
@@ -57,9 +57,9 @@ sampled_gr_trans <- ggplot(sampled_metrics, aes(x = transitivity)) +
   theme(axis.text.x = element_text(size = font_size),   # Adjust x-axis label size
         axis.text.y = element_text(size = font_size),
         axis.title.x = element_text(size = title_font),  # Adjust x-axis title size
-        axis.title.y = element_text(size = title_font),
-        plot.background = element_rect(fill = "white"),
-        panel.background = element_rect(fill = "white"))
+        axis.title.y = element_text(size = title_font))
+        #plot.background = element_rect(fill = "white"),
+        #panel.background = element_rect(fill = "white"))
 
 
 orig_gr_trans <- ggplot() + 
@@ -70,9 +70,9 @@ orig_gr_trans <- ggplot() +
   theme(axis.text.x = element_text(size = font_size),   # Adjust x-axis label size
         axis.text.y = element_text(size = font_size),
         axis.title.x = element_text(size = title_font),  # Adjust x-axis title size
-        axis.title.y = element_text(size = title_font),
-        plot.background = element_rect(fill = "white"),
-        panel.background = element_rect(fill = "white"))
+        axis.title.y = element_text(size = title_font))
+        #plot.background = element_rect(fill = "white"),
+        #panel.background = element_rect(fill = "white"))
 
 # Combine the plots
 grid.arrange(sampled_gr_deg, orig_gr_deg, sampled_gr_trans, orig_gr_trans,
@@ -99,9 +99,9 @@ g2 <- ggplot(sampled_metrics, aes(x = degree)) +
   theme(axis.text.x = element_text(size = font_size),   # Adjust x-axis label size
         axis.text.y = element_text(size = font_size),
         axis.title.x = element_text(size = title_font),  # Adjust x-axis title size
-        axis.title.y = element_text(size = title_font),
-        plot.background = element_rect(fill = "white"),
-        panel.background = element_rect(fill = "white"))
+        axis.title.y = element_text(size = title_font))
+        #plot.background = element_rect(fill = "white"),
+        #panel.background = element_rect(fill = "white"))
 
 ggsave(file=here("outputs/plots_and_tables/2_degree_plot.png"), 
        plot=g2,
@@ -139,9 +139,9 @@ g3 <- ggplot(sampled_metrics) +
   theme(axis.text.x = element_text(size = font_size),   # Adjust x-axis label size
         axis.text.y = element_text(size = font_size),
         axis.title.x = element_text(size = title_font),  # Adjust x-axis title size
-        axis.title.y = element_text(size = title_font),
-        plot.background = element_rect(fill = "white"),
-        panel.background = element_rect(fill = "white"))
+        axis.title.y = element_text(size = title_font))
+        #plot.background = element_rect(fill = "white"),
+        #panel.background = element_rect(fill = "white"))
 
 ggsave(file=here("outputs/plots_and_tables/4_pagerank_plot.png"), 
        plot=g3,

@@ -68,8 +68,9 @@ for (i in seq_along(model_list)) {
 
 # Print or inspect the results dataframe
 write.csv(results_df, here("outputs/plots_and_tables/7_regression-results.csv"), row.names=FALSE)
-
+######################################################################
 # Extract coefficients and their names
+
 coefficients_df <- as.data.frame(list(coef(model1_0505), coef(model2_0302)))
 
 colnames(coefficients_df) <- c("network_0302", "network_0505")
@@ -78,6 +79,11 @@ coefficients_df$change <- ifelse(coefficients_df$network_0505 > coefficients_df$
 
 coefficients_df <- coefficients_df[2:8, ] # drop intercept row
 coefficients_df
+
+# Print or inspect the results dataframe
+write.csv(coefficients_df, here("outputs/plots_and_tables/8_regression-coefficients.csv"), row.names=FALSE)
+
+
 
 
 

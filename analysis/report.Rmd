@@ -1,7 +1,7 @@
 ---
 title: "A Deep Dive into  the Network Behavior of Amazon Co-Purchases "
 author: Ammar Bagharib A0218111X, Chen Yang A0201905R, Ng Qing Yu Randy A0199577B  
-date: "NUS AY2023/24 Semester 1"
+date: "National University of Singapore AY2023/24 Semester 1"
 output: 
   bookdown::pdf_document2:
       toc: true
@@ -36,7 +36,7 @@ In doing so, we anticipate that our efforts will yield a mutually beneficial out
 
 In our project, we used the amazon co-purchase dataset from Stanford University’s SNAP library. The dataset was compiled through an extensive crawl of the Amazon website in the summer of 2006, capturing a vast array of product metadata and review details for 548,552 diverse items, spanning categories such as Books, music CDs, DVDs, and VHS video tapes. It encompasses comprehensive information for each product, including titles, sales ranks, and genre/category information. In our analysis, we restricted the product scope to books only. 
 
-Specifically, we delved into the structure of the network as of March 2006 and developed our model around it. In our network, each node represents a book and each undirected edge represent the co-purchase relationship between two books. To supplement our analysis, we extracted the product ID, name, genre, product rank and review count information for all books to be included as node attributes. 
+Specifically, we delved into the structure of the network as of March 2003 and developed our model around it. In our network, each node represents a book and each undirected edge represent the co-purchase relationship between two books. To supplement our analysis, we extracted the product ID, name, genre, product rank and review count information for all books to be included as node attributes. 
 
 ## Network Sampling
 
@@ -44,27 +44,45 @@ Specifically, we delved into the structure of the network as of March 2006 and d
 
 To enable us to compute some of the key network metrics efficiently, we opted to sample 100,000 nodes from the network. This approach offers a practical means of analysis while retaining a substantial portion of the network's complexity. Steps taken in our sampling process are as follows: 
 
-**Step 1:** load graph, and filter for nodes with degree \> 1, and set this as the graph we'll be working with.
+**Step 1:** 
 
-**Step 1:** filter for books which have reviews \> 1 per 1.25 months. The time period is defined as from when the co-purchases network was derived, to 7 August 2006, which is the date of collection of the metadata file.
+Load graph, simplify and remove multiple loops, and set it as undirected. Filter for nodes with degree \> 1, and set this as the graph we'll be working with.
 
-**Step 2:** filter for books which have valid genres I.e., non-empty strings
+**Step 1:** 
 
-**Step 3:** filter for links in which both 'from' and 'to' books follow the conditions outlined in the steps 1 and 2
+Filter for books which have reviews \> 1 per 1.25 months. The time period is defined as from when the co-purchases network was derived e.g., March 2003, to 7 August 2006, which is the date of collection of the metadata file.
 
-**Step 4:** extract the indices of nodes from step 3, lets define this as nodes_1, and get the count of nodes. Let's define the counts of these nodes as `x`
+**Step 2:** 
 
-**Step 5:** get count of remaining nodes needed to sample: y = (100,000-x)
+Filter for books which have valid genres i.e., non-empty strings
 
-**Step 6:** sample y indices of nodes from setdiff(1:length(V(g)), nodes). Let's label these nodes as nodes_2
+**Step 3:** 
 
-**Step 7:** combine nodes_1 and nodes_2 indices and obtain subgraph from g using these indices.
+Filter for links in which both 'from' and 'to' books follow the conditions outlined in the steps 1 and 2
 
-**Step 8:** generate network metrics for subgraph, after which we filter only for the nodes present in nodes_1, and save it in a data frame.
+**Step 4:** 
+
+Extract the indices of nodes from step 3, lets define this as nodes_1, and get the count of nodes. Let's define the counts of these nodes as `x`
+
+**Step 5:** 
+
+Get count of remaining nodes needed to sample: y = (100,000-x)
+
+**Step 6:** 
+
+Sample y indices of nodes from setdiff(1:length(V(g)), nodes). Let's label these nodes as nodes_2
+
+**Step 7:** 
+
+Combine nodes_1 and nodes_2 indices and obtain subgraph from g using these indices.
+
+**Step 8:** 
+
+Generate network metrics for subgraph, after which we filter only for the nodes present in nodes_1, and save it in a data frame.
 
 As we can see in Figure \@ref(fig:compare-structure), the subgraph formed by our sampled nodes in step 7 exhibits a degree and local transitivity distribution that closely mirrors those of the original, complete network. This congruence strongly suggests that the sampled network effectively captures the essential structural characteristics of the larger network.
 
-```{r compare-structure, fig.align = 'center' , out.width="100%", out.height="20%", fig.cap="All Predictor Relationships using ggpairs", out.extra=''}
+```{r compare-structure, fig.align = 'center' , out.width="100%", out.height="70%", fig.cap="Degree and Transitivty Distributions in Sampled vs Overall Graph", out.extra=''}
 knitr::include_graphics(here::here('outputs/plots_and_tables/1_combined_plot.png'))
 ```
 
@@ -78,7 +96,7 @@ We performed some basic analysis to draw some insights on the purchasing pattern
 
 As we can see in Figure \@ref(fig:deg-visualization), the degree distribution of our network exhibits a power-law distribution, a characteristic often seen in naturally occurring networks.
 
-```{r deg-visualization,  fig.align = 'center' , out.width="100%", out.height="30%", fig.cap="Degree Centrality Distribution", out.extra=''}
+```{r deg-visualization,  fig.align = 'center' , out.width="100%", out.height="70%", fig.cap="Degree Centrality Distribution", out.extra=''}
 knitr::include_graphics(here::here("outputs/plots_and_tables/2_degree_plot.png"))
 ```
 
@@ -117,7 +135,9 @@ pagerank_table <- data.table::fread(here::here("outputs/plots_and_tables/5_top-n
 knitr::kable(pagerank_table, caption = "Top 10 Books by Pagerank", format = "latex", position = "h!")
 ```
 
-The popularity of books, as determined by PageRank, may be attributed to their association with specific genres that inherently possess broad mass appeal. To explore this hypothesis further, we tabulated the count of books within each genre among the top 100 PageRank books. Subsequently, we organized the genres in descending order based on book count as seen in Figure \@ref(tab:top-pagerank). We excluded the first two genres which are very broad and offer no analytical value ("General", "Authors, (A-Z)", “Literature & Fiction”).
+The popularity of books, as determined by PageRank, may be attributed to their association with specific genres that inherently possess broad mass appeal. To explore this hypothesis further, we tabulated the count of books within each genre among the top 100 PageRank books. Subsequently, we organized the genres in descending order based on book count as seen in Table \@ref(tab:top-pagerank). We excluded the first two genres which are very broad and offer no analytical value ("General", "Authors, (A-Z)", “Literature & Fiction”).
+
+\newpage
 
 ```{r top-genres}
 pagerank_table <- data.table::fread(here::here("outputs/plots_and_tables/6_top-n-genres.csv"))
@@ -148,6 +168,8 @@ The primary objective for our model was to determine whether the network metrics
 
 **Baseline Features:**
 
+These features represent the book-specific information obtained from August 2006.
+
 1. *num_common_genre*: This refers to the number of common genres in the entire genre string between 2 books. We do not make any distinction between possible main vs sub-genres as we did not have access to such data.
 
 2. *mean_salesrank*: This refers to the average salesrank of 2 books, collected from the metadata file
@@ -158,7 +180,7 @@ The primary objective for our model was to determine whether the network metrics
 
 **Network Metrics**
 
-All the following network metrics of the books, would be collected from Amazon's product co-purchasing network, at a specific point in time. For example,  from the Amazon product co-purchasing network from March 2 2003 `amazon0302.txt`
+All the following network metrics of the books, would be collected from Amazon's product co-purchasing network, at a specific point in time. For example, from the Amazon product co-purchasing network from March 2 2003 *amazon0302.txt*
 
 1. *mean_degree*: The average degree centrality of 2 books
 
@@ -176,7 +198,7 @@ All the following network metrics of the books, would be collected from Amazon's
 
 7. *same_community*: Whether or not the 2 books belonged to the same community.
 
-We tried Louvain against the Greedy community detection algorithms but ultimately decided to go with the Louvain method as it resulted in clusters with higher modularity scores (i.e., better-defined cummunity structure). These serve as the training dataset for our two models.
+For the feature *same_community*, we tried Louvain against the Greedy community detection algorithms but ultimately decided to go with the Louvain method as it resulted in clusters with higher modularity scores (i.e., better-defined cummunity structure). 
 
 ## Methodology
 
@@ -197,22 +219,15 @@ Handling of NA values are essential in ensuring that model training and model pr
 
 Scaling features before fitting a logistic regression model is crucial because it ensures that each feature contributes equally to the determination of the outcome. Logistic regression uses gradient descent as an optimization technique, which converges much faster when features are on similar scales. Without scaling, features with large values can disproportionately influence the model and result in an unstable training process, where the algorithm might oscillate and take a long time to find the global minimum, or potentially not converge at all. Thus, we used to use standard scaling for our dataset, which subtract the mean of the variable from each datapoint then divide it by its standard deviation. This ensures that each variable has a mean of 0 and a standard deviation of 1. There are alternative forms of scaling such as min-max scaling, but we believe that standard-scaling is sufficient for our case.
 
+### Train-Test Split
 
-
-
-
-
-To construct our testing set, we did not utilise the traditional train-test-split approach. Instead, we gathered node pairs that formed new connections between March and June. In essence, these pairs represent books that established co-purchase relationships during this time frame. This was achieved by getting all node pairs which are connected in June and further filtering out pairs already linked in March. From these selected node pairs, we retrieved their respective features for our baseline and alternative models. With our testing datasets, we then applied our two models and compared their respective accuracy scores.
-
-#### Network Metrics
-
-
+To construct our testing set, we did not utilise the traditional train-test-split approach. Instead, we gathered node pairs that formed **only new connections** between March and June. In essence, these pairs represent books that established co-purchase relationships only during June. This was achieved by getting all node pairs which are connected in June and further filtering out pairs already linked in March. From the newly formed links in June, we then assign the nodes' network metrics based on that of March. Meaning, although our test set was newly formed links in June, we still utilised network metrics in March, as we believed it would be counter intuitive to use the network metrics of June. For the sake of our hypothesis, we believe regarding the test set: the the network structure of the co-purchases have not been formed yet. We're essentially looking at the perspective of the recommendation engine and attempting to see whether our the past network metrics could predict a co-purchase.
 
 ## Findings
 
-Just to re-emphasize, we want to test the hypothesis that network metrics serve as better predictors than item-specific information. Consequently, to test this hypothesis, the first model which is based on the 0302 dataset, only contains item-specific information, and the second model contains only network metrics.
+Just to re-emphasize, we want to test the hypothesis that network metrics serve as better predictors than item-specific information. Consequently, to test this hypothesis, the first model which is based on the March *0302* dataset, only contains book-specific information, and the second model contains only network metrics.
 
-We then compare the predictive performance, evaluated using accuracy as the metric, of both models to determine the outcome of our hypothesis.
+We then compare the predictive performance, evaluated using accuracy as the metric, of both models against that of the newly formed links in June *0602* dataset to determine the outcome of our hypothesis.
 
 
 ```{r first-regression-results }
@@ -221,25 +236,35 @@ regression_table <- data.table::fread(here::here("outputs/plots_and_tables/7_reg
 knitr::kable(regression_table, caption = "Regression Results", format = "latex", position = "h!")
 ```
 
-As seen from table 5 above, we first refer to the first two rows, which is in direct relation to our hypothesis. Although both model’s accuracy is less than 50%, which suggests that it is worse than a coin-flip, our hypothesis is still correct in that model two’s accuracy is quite significantly higher than model one’s accuracy, by approximately 5%. Plausible explanations for the low accuracy could be that the model was not tuned, where we merely used a rule of thumb in that predicted probabilities above the value 0.5 was rounded to 1, and 0 otherwise. Nonetheless, these results are indicative that network metrics serve as better predictors than item-specific information.
+As seen from Table \@ref(tab:first-regression-results) above, we first refer to the first two rows, which is in direct relation to our hypothesis. Although both model’s accuracy is less than 50%, which suggests that it is worse than a coin-flip, our hypothesis is still correct in that model two’s accuracy is higher than model one’s accuracy, by approximately 5%. Plausible explanations for the low accuracy could be that the model was not tuned, where we merely used a rule of thumb in that predicted probabilities above the value 0.5 was rounded to 1, and 0 otherwise. Nonetheless, these results are indicative that network metrics serve as better predictors than item-specific information.
+
 Thereafter, we combined the 2 sets of information for a third model that makes use of both item-specific information and network metrics, as seen in row 3 in table 5 above. Although the performance was better than model 1, it was worse than model 2. A plausible explanation is that overfitting occurred due to there being too many independent variables, thus producing lousier out-of-sample performance. One solution to this is to perform regularization in the form of L1-norm regularization, but due to the time constraints and direction of the project, it was put on hold and can be researched in the future as an extension.
 
+\newpage
 
-## Recency of Data
+## Further Analysis: Recency of Data
 
-We further hypothesize that incorporating more recent information or datasets could yield improvements in the model's performance. To test this hypothesis, we opted to utilize network metrics from May I.e., 0505 network metrics, for the node pairs in our training dataset. Consequently, we re-trained our model, anticipating that this adjustment would provide the algorithm with a more current and nuanced understanding of the network's dynamics. The results can be seen from table 5 above in row 4, where the accuracy of the model improved significantly to approximately 62%. 
-
-<p>
+We further hypothesize that incorporating more recent network metrics' information could yield improvements in the model's performance. To test this hypothesis, we opted to utilize network metrics from May *0505* dataset. Consequently, we re-trained our model, anticipating that this adjustment would provide the algorithm with a more current and nuanced understanding of the network's dynamics. The testing data also followed suit, utlising network metrics of nodes from May, instead of March as was done in the first hypothesis.
 
 ```{r added-analysis-regression-results }
 regression_table <- data.table::fread(here::here("outputs/plots_and_tables/7_regression-results.csv"))
 
-knitr::kable(regression_table, caption = "Regression Results", format = "latex", position = "h!")
+knitr::kable(regression_table, caption = "Added Regression Results", format = "latex", position = "h!")
 ```
 
-<p>
+As seen in Table \@ref(tab:added-analysis-regression-results), the accuracy of the model improved significantly to approximately 62%. This is a marked improvement because now the model predictive accuracy is better than a random coin flip and is usable. Thus, this re-affirms the notion that networks are constantly evolving, and thus it is essential to use the most recent information in model training to achieve the best results possible.
 
-This is marked improvement because now the model predictive accuracy is better than a random coin flip and is usable. Thus, this re-affirms the notion that networks are constantly evolving, and thus it is essential to use the most recent information in model training to achieve the best results possible.
+```{r added-analysis-regression-coeff }
+regression_table <- data.table::fread(here::here("outputs/plots_and_tables/8_regression-coefficients.csv"))
+
+knitr::kable(regression_table, caption = "Comparison of Regression Coefficients using March and May Network Metrics", format = "latex", position = "h!")
+```
+
+As seen in Table \@ref(tab:added-analysis-regression-coeff) above, the variable *same_community* emerges with the most substantial coefficient, signifying its pivotal role in predicting link formation. The positive coefficient indicates that node pairs within the same community, as identified by the louvain community detection algorithm, are more inclined to establish connections in the future. Notably, the magnitude of this coefficient increased over time (between March and May of 2006), suggesting that, as the network grows, there is an increasing tendency for connections to form among members of the same community. This underscores the escalating significance of community cohesion in shaping linkages within the evolving network.
+
+In contrast, the variable *mean_pagerank* exhibits a negative correlation with the log-odds of a co-purchase relationship between two books. This finding diverges from the anticipated outcome, as one might intuitively expect a higher mean pagerank to positively influence the likelihood of a linkage between the paired books. One possibly reason could be that books with higher pageranks may belong to different genres or cater to diverse interests. Readers with an interest in one highly ranked book may not necessarily have the same preferences for another book, reducing the likelihood of a co-purchase.
+
+As for the drastic change in coefficient of *mean_pagerank* between March and may, one possible reason could be the introduction of new books or changes in literary trends between March and May, which could have altered how readers make purchasing decisions. New releases may attract different audiences with distinct preferences, affecting the co-purchase patterns. Alternatively, there could also be seasonal trends influencing book purchasing behavior. Preferences, reading habits, or marketing strategies might vary between March and May, leading to different patterns of co-purchase relationships. However, we'll require extensive data spanning a much longer time horizon to test these hypotheses.
 
 \newpage
 
@@ -260,6 +285,7 @@ Moreover, our dataset is from almost two decades ago, which raises concerns abou
 \newpage
 
 # 7 References
+
 
 ---
 nocite: '@*'
