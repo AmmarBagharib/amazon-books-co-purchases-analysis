@@ -4,11 +4,11 @@
 
 ### [Read the Project Report HERE](https://github.com/AmmarBagharib/amazon_graph_analysis/blob/master/analysis/report.pdf)
 
-
-# Authors:
+Project done for NUS module, Network Analytics with Business Applications, in Semester 1 AY2023/24
 - Ammar Bagharib
 - Chen Yang
 - Randy Ng
+Supervised by: Dr. Tan Tianhui 
 
 # Overview
 
@@ -19,6 +19,7 @@ In doing so, we anticipate that our efforts will yield a mutually beneficial out
 
 In our project, we used the amazon co-purchase dataset from Stanford University’s SNAP library. The dataset was compiled through an extensive crawl of the Amazon website in the summer of 2006, capturing a vast array of product metadata and review details for 548,552 diverse items, spanning categories such as Books, music CDs, DVDs, and VHS video tapes. It encompasses comprehensive information for each product, including titles, sales ranks, and genre/category information. In our analysis, we restricted the product scope to books only.
 
+Considering Amazon’s position as a leading tech company renowned for employing diverse cutting-edge techniques and algorithms within its recommendation engine, one noteworthy approach utilized is the integration of network analytics in its item-to-item collaborative filtering system (Muralidharan, 2023). However, as outsiders, we are unsure of the impact which network metrics have on a predictive model’s performance – and the second goal of our project is to answer this question. We explore whether the network metrics of the books in the co-purchase network serve as better predictors of co-purchases, when compared against book-specific features.
 
 ## Replicate Analysis
 
