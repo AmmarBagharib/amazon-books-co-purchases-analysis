@@ -1,6 +1,6 @@
 <img src="https://github.com/AmmarBagharib/amazon_graph_analysis/blob/master/photos/amazon-logo-1.png" width="400" height="130" />
 
-## A Comprehensive Analysis of Singapore Hotel Reviews Pre and Post-COVID Era
+## A Deep Dive into the Network of Book Co-Purchases on Amazon
 
 ### Read the Project Report <[HERE](https://github.com/AmmarBagharib/amazon-books-co-purchases-analysis/blob/master/analysis/report.pdf)>
 
