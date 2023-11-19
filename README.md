@@ -26,7 +26,7 @@ cd amazon_graph_analysis
 
 in Mac, in your Terminal you can run `pwd` and it should show:
 
-`(your home folder)/git/amazon_graph_analysis`
+`(your home folder)/amazon_graph_analysis`
 
 ### 3. Opening Project environment in RStudio
 
