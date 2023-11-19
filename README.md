@@ -10,6 +10,16 @@
 - Chen Yang
 - Randy Ng
 
+# Overview
+
+Established in 1995 as a pioneering online bookstore, Amazon has been a cherished destination for book enthusiasts for several decades. While the company has evolved and expanded into a diverse range of industries, it has consistently maintained its status as a go-to hub for book shoppers.
+In the scope of this project, our objective is to delve into the evolving co-purchase patterns of books over time, understand it’s characteristics and underlying patterns. With this information, we’re looking to identify key products which drive purchasing behaviour among consumers, devise marketing strategies, as well as to assess the efficacy of incorporating network analytics into the development of product recommendation engines.
+
+In doing so, we anticipate that our efforts will yield a mutually beneficial outcome. By facilitating book discoveries and guiding readers to titles they might not have encountered otherwise, we aim to stimulate sales on the platform, benefiting both Amazon and its thriving community of book lovers. 
+
+In our project, we used the amazon co-purchase dataset from Stanford University’s SNAP library. The dataset was compiled through an extensive crawl of the Amazon website in the summer of 2006, capturing a vast array of product metadata and review details for 548,552 diverse items, spanning categories such as Books, music CDs, DVDs, and VHS video tapes. It encompasses comprehensive information for each product, including titles, sales ranks, and genre/category information. In our analysis, we restricted the product scope to books only.
+
+
 ## Replicate Analysis
 
 ### 1. Getting Github Repo onto local device
