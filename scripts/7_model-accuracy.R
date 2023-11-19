@@ -78,10 +78,10 @@ colnames(coefficients_df) <- c("network_0302", "network_0505")
 coefficients_df$change <- ifelse(coefficients_df$network_0505 > coefficients_df$network_0302, "Increase", "Decrease")
 
 coefficients_df <- coefficients_df[2:8, ] # drop intercept row
-coefficients_df
+View(coefficients_df)
 
 # Print or inspect the results dataframe
-write.csv(coefficients_df, here("outputs/plots_and_tables/8_regression-coefficients.csv"), row.names=FALSE)
+write.csv(coefficients_df, here("outputs/plots_and_tables/8_regression-coefficients.csv"), row.names=TRUE)
 
 
 
