@@ -174,10 +174,10 @@ First, we exhaustively created all conceivable pairings among the books within o
 4. Local transitivity  
 5. PageRank  
 6. Eigenvector centrality  
-7. Louvrain Community membership  
+7. Louvain Community membership  
 ```
 
-These serve as the training dataset for our two models.
+We tried several community detection algorithms but ultimately decided to go with the Louvain method as it resulted in clusters with higher modularity scores (i.e., better-defined cummunity structure). These serve as the training dataset for our two models.
 
 ### Downsampling of Negative Data Points
 
@@ -218,7 +218,7 @@ Thereafter, we combined the 2 sets of information for a third model that makes u
 
 ## Recency of Data
 
-We further hypothesize that incorporating more recent information or datasets could yield improvements in the model's performance. To test this hypothesis, we opted to utilize network metrics from May I.e., 0505 network metrics, for the node pairs in our training dataset. Consequently, we re-trained our model, anticipating that this adjustment would provide the algorithm with a more current and nuanced understanding of the network's dynamics. The results can be seen from table 5 above in row 4, where the accuracy of the model improved significantly to approximately 62%. This is marked improvement because now the model predictive accuracy is better than a random coin flip and is usable. Thus, this re-affirms the notion that networks are constantly evolving, and thus it is essential to use the most recent information in model training to achieve the best results possible.
+We further hypothesize that incorporating more recent information or datasets could yield improvements in the model's performance. To test this hypothesis, we opted to utilize network metrics from May I.e., 0505 network metrics, for the node pairs in our training dataset. Consequently, we re-trained our model, anticipating that this adjustment would provide the algorithm with a more current and nuanced understanding of the network's dynamics. The results can be seen from table 5 above in row 4, where the accuracy of the model improved significantly to approximately 62%. 
 
 <p>
 
@@ -230,7 +230,7 @@ knitr::kable(regression_table, caption = "Regression Results", format = "latex",
 
 <p>
 
-**insert findings** here blah blah
+This is marked improvement because now the model predictive accuracy is better than a random coin flip and is usable. Thus, this re-affirms the notion that networks are constantly evolving, and thus it is essential to use the most recent information in model training to achieve the best results possible.
 
 \newpage
 
