@@ -13,13 +13,10 @@ Supervised by: Dr. Tan Tianhui
 # Overview
 
 Established in 1995 as a pioneering online bookstore, Amazon has been a cherished destination for book enthusiasts for several decades. While the company has evolved and expanded into a diverse range of industries, it has consistently maintained its status as a go-to hub for book shoppers.
+
 In the scope of this project, our objective is to delve into the evolving co-purchase patterns of books over time, understand it’s characteristics and underlying patterns. With this information, we’re looking to identify key products which drive purchasing behaviour among consumers, devise marketing strategies, as well as to assess the efficacy of incorporating network analytics into the development of product recommendation engines.
 
-In doing so, we anticipate that our efforts will yield a mutually beneficial outcome. By facilitating book discoveries and guiding readers to titles they might not have encountered otherwise, we aim to stimulate sales on the platform, benefiting both Amazon and its thriving community of book lovers. 
-
 In our project, we used the amazon co-purchase dataset from Stanford University’s SNAP library. The dataset was compiled through an extensive crawl of the Amazon website in the summer of 2006, capturing a vast array of product metadata and review details for 548,552 diverse items, spanning categories such as Books, music CDs, DVDs, and VHS video tapes. It encompasses comprehensive information for each product, including titles, sales ranks, and genre/category information. In our analysis, we restricted the product scope to books only.
-
-Considering Amazon’s position as a leading tech company renowned for employing diverse cutting-edge techniques and algorithms within its recommendation engine, one noteworthy approach utilized is the integration of network analytics in its item-to-item collaborative filtering system (Muralidharan, 2023). However, as outsiders, we are unsure of the impact which network metrics have on a predictive model’s performance – and the second goal of our project is to answer this question. We explore whether the network metrics of the books in the co-purchase network serve as better predictors of co-purchases, when compared against book-specific features.
 
 ## Replicate Analysis
 
