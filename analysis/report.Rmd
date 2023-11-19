@@ -199,7 +199,8 @@ The primary objective is for our model to discern the inherent patterns between 
 
 ## Findings
 
-**insert findings here** blah blah
+Just to re-emphasize, we want to test the hypothesis that network metrics serve as better predictors than item-specific information. Consequently, to test this hypothesis, the first model which is based on the 0302 dataset, only contains item-specific information, and the second model contains only network metrics. We then compare the predictive performance, evaluated using accuracy as the metric, of both models to determine the outcome of our hypothesis.
+
 
 <p>
 
@@ -211,9 +212,13 @@ knitr::kable(regression_table, caption = "Regression Results", format = "latex",
 
 <p>
 
+As seen from table 5 above, we first refer to the first two rows, which is in direct relation to our hypothesis. Although both model’s accuracy is less than 50%, which suggests that it is worse than a coin-flip, our hypothesis is still correct in that model two’s accuracy is quite significantly higher than model one’s accuracy, by approximately 5%. Plausible explanations for the low accuracy could be that the model was not tuned, where we merely used a rule of thumb in that predicted probabilities above the value 0.5 was rounded to 1, and 0 otherwise. Nonetheless, these results are indicative that network metrics serve as better predictors than item-specific information.
+Thereafter, we combined the 2 sets of information for a third model that makes use of both item-specific information and network metrics, as seen in row 3 in table 5 above. Although the performance was better than model 1, it was worse than model 2. A plausible explanation is that overfitting occurred due to there being too many independent variables, thus producing lousier out-of-sample performance. One solution to this is to perform regularization in the form of L1-norm regularization, but due to the time constraints and direction of the project, it was put on hold and can be researched in the future as an extension.
+
+
 ## Recency of Data
 
-We further hypothesize that incorporating more recent information or datasets could yield improvements in the model's performance. To test this hypothesis, we opted to utilize network metrics from May for the node pairs in our training dataset. Consequently, we re-trained our model, anticipating that this adjustment would provide the algorithm with a more current and nuanced understanding of the network's dynamics.
+We further hypothesize that incorporating more recent information or datasets could yield improvements in the model's performance. To test this hypothesis, we opted to utilize network metrics from May I.e., 0505 network metrics, for the node pairs in our training dataset. Consequently, we re-trained our model, anticipating that this adjustment would provide the algorithm with a more current and nuanced understanding of the network's dynamics. The results can be seen from table 5 above in row 4, where the accuracy of the model improved significantly to approximately 62%. This is marked improvement because now the model predictive accuracy is better than a random coin flip and is usable. Thus, this re-affirms the notion that networks are constantly evolving, and thus it is essential to use the most recent information in model training to achieve the best results possible.
 
 <p>
 
