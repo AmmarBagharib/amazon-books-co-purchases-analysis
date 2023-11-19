@@ -1,6 +1,6 @@
 ---
-title: "A Deep Dive into Amazon Co-Purchases Network Behavior"
-author: Ammar Bagharib, Chen Yang, Ng Qing Yu Randy 
+title: "A Deep Dive into  the Network Behavior of Amazon Co-Purchases "
+author: Ammar Bagharib A0218111X, Chen Yang A0201905R, Ng Qing Yu Randy A0199577B  
 date: "NUS AY2023/24 Semester 1"
 output: 
   bookdown::pdf_document2:
@@ -26,27 +26,27 @@ library(bookdown)
 
 # Introduction
 
-Established in 1995 as a pioneering online bookstore, Amazon has been a cherished destination for book enthusiasts for several decades. While the company has evolved and expanded into a diverse range of industries, it has consistently maintained its status as a go-to hub for book shoppers.
+Established in 1995 as a pioneering online bookstore, Amazon has been a cherished destination for book enthusiasts for several decades. While the company has evolved and expanded into a diverse range of industries, it has consistently maintained its status as a go-to hub for book shoppers. 
 
-In the scope of this project, our objective is to delve into the evolving co-purchase patterns of books over time, understand it's characteristics and underlying patterns. With this information, we're looking to identify key products which drive purchasing behaviour among consumers, devise marketing strategies, as well as to assess the efficacy of incorporating network analytics into the development of product recommendation engines.
+In the scope of this project, our objective is to delve into the evolving co-purchase patterns of books over time, understand it's characteristics and underlying patterns. With this information, we’re looking to identify key products which drive purchasing behaviour among consumers, devise marketing strategies, as well as to assess the efficacy of incorporating network analytics into the development of product recommendation engines. 
 
-In doing so, we anticipate that our efforts will yield a mutually beneficial outcome. By facilitating book discoveries and guiding readers to titles they might not have encountered otherwise, we aim to stimulate sales on the platform, benefiting both Amazon and its thriving community of book lovers.
+In doing so, we anticipate that our efforts will yield a mutually beneficial outcome. By facilitating book discoveries and guiding readers to titles they might not have encountered otherwise, we aim to stimulate sales on the platform, benefiting both Amazon and its thriving community of book lovers. 
 
 # About the Dataset
 
-In our project, we used the amazon co-purchase dataset from Stanford University's SNAP library. The dataset was compiled through an extensive crawl of the Amazon website in the summer of 2006, capturing a vast array of product metadata and review details for 548,552 diverse items, spanning categories such as Books, music CDs, DVDs, and VHS video tapes. It encompasses comprehensive information for each product, including titles, sales ranks, and genre or category information. In our analysis, we restricted the product scope to books only.
+In our project, we used the amazon co-purchase dataset from Stanford University’s SNAP library. The dataset was compiled through an extensive crawl of the Amazon website in the summer of 2006, capturing a vast array of product metadata and review details for 548,552 diverse items, spanning categories such as Books, music CDs, DVDs, and VHS video tapes. It encompasses comprehensive information for each product, including titles, sales ranks, and genre/category information. In our analysis, we restricted the product scope to books only. 
 
-Specifically, we delved into the structure of the network as of March 2006 and developed our model around it. In our network, each node represents a book and each undirected edge represent the co-purchase relationship between two books. To supplement our analysis, we extracted the product ID, name, genre, product rank and review count information for all books to be included as node attributes.
+Specifically, we delved into the structure of the network as of March 2006 and developed our model around it. In our network, each node represents a book and each undirected edge represent the co-purchase relationship between two books. To supplement our analysis, we extracted the product ID, name, genre, product rank and review count information for all books to be included as node attributes. 
 
 ## Network Sampling
 
 ### Methodology:
 
-To enable us to compute some of the key network metrics efficiently, we opted to sample 100,000 nodes from the network. This approach offers a practical means of analysis while retaining a substantial portion of the network's complexity. Steps taken in our sampling process are as follows:
+To enable us to compute some of the key network metrics efficiently, we opted to sample 100,000 nodes from the network. This approach offers a practical means of analysis while retaining a substantial portion of the network's complexity. Steps taken in our sampling process are as follows: 
 
 **Step 1:** load graph, and filter for nodes with degree \> 1, and set this as the graph we'll be working with.
 
-**Step 1:** filter for books which have reviews \> 1 per 1.25 months
+**Step 1:** filter for books which have reviews \> 1 per 1.25 months. The time period is defined as from when the co-purchases network was derived, to 7 August 2006, which is the date of collection of the metadata file.
 
 **Step 2:** filter for books which have valid genres I.e., non-empty strings
 
@@ -78,13 +78,9 @@ We performed some basic analysis to draw some insights on the purchasing pattern
 
 As we can see in Figure \@ref(fig:deg-visualization), the degree distribution of our network exhibits a power-law distribution, a characteristic often seen in naturally occurring networks.
 
-<p>
-
 ```{r deg-visualization,  fig.align = 'center' , out.width="100%", out.height="30%", fig.cap="Degree Centrality Distribution", out.extra=''}
 knitr::include_graphics(here::here("outputs/plots_and_tables/2_degree_plot.png"))
 ```
-
-<p>
 
 Majority of books in our network have low degree centrality, with approximately 3 or fewer connections. On the far right of the distribution, we observe a small group of books with approximately 70 first-degree connections, indicating a significant influence on the purchase of other books. This suggests that most books within the network neither strongly influence the purchase of other books nor are significantly influenced by other books.
 
@@ -92,15 +88,11 @@ Majority of books in our network have low degree centrality, with approximately 
 
 In a co-purchase network, the density and transitivity metrics offer valuable insights into the interconnectedness of products through customer co-purchases. With a global transitivity of 0.233, our co-purchase network demonstrates a moderate level of clustering tendency, indicating that some books do tend to form clusters in terms of co-purchase behaviour as seen in Figure \@ref(fig:deg-visualization).
 
-<p>
-
 ```{r density-trans-sampled }
 trans_density_table <- data.table::fread(here::here("outputs/plots_and_tables/3_transitivity_density.csv"))
 
 knitr::kable(trans_density_table, caption = "Density and Global Transitivity", format = "latex", position = "h!")
 ```
-
-<p>
 
 Simultaneously, the network exhibits a low density of 0.0000277, signifying a sparse web of connections between products. This low density indicates that even though a small number of clusters exist, the overall network is very sparse.
 
@@ -110,20 +102,14 @@ Taken together, this means that books within the network are not frequently co-p
 
 We observed a noteworthy similarity between the distribution of PageRank and degree centrality in our network as seen in Figure \@ref(fig:pagerank). Both distributions exhibit a power-law pattern, wherein a small number of books boast significantly higher PageRank scores than the rest.
 
-<p>
-
 ```{r pagerank, fig.align = 'center' , out.width="100%", out.height="30%", fig.cap="Pagerank Distribution", out.extra=''}
 #visualize distribution of pagerank
 knitr::include_graphics(here::here("outputs/plots_and_tables/4_pagerank_plot.png"))
 ```
 
-<p>
-
 High PageRank indicates that a given book enjoys strong interconnectedness and popularity within our co-purchase network. While the highest PageRank score in our network is modest at 0.000231, the existence of a select few titles with distinctly higher PageRank suggests that a small subset of books still wield considerable authority and influence over copurchase behaviours.
 
 Building on this insight, we propose a strategic initiative to prominently feature these high PageRank books in our homepage recommendations. For instance, Amazon can promote the top-10 books in descending PageRank as seen in Figure \@ref(fig:pagerank), in a carousel on the homepage. This allows Amazon to leverage the influence of these books and foster a more interconnected and dynamic co-purchase network on the platform, thereby improving sales.
-
-<p>
 
 ```{r top-pagerank }
 pagerank_table <- data.table::fread(here::here("outputs/plots_and_tables/5_top-n-books.csv"))
@@ -131,19 +117,13 @@ pagerank_table <- data.table::fread(here::here("outputs/plots_and_tables/5_top-n
 knitr::kable(pagerank_table, caption = "Top 10 Books by Pagerank", format = "latex", position = "h!")
 ```
 
-<p>
-
-The popularity of books, as determined by PageRank, may be attributed to their association with specific genres that inherently possess broad mass appeal. To explore this hypothesis further, we tabulated the count of books within each genre among the top 100 PageRank books. Subsequently, we organized the genres in descending order based on book count as seen in Figure \@ref(tab:top-pagerank). We excluded the first two genres which are very broad and offer no analytical value ("General", "Authors, (A-Z)".
-
-<p>
+The popularity of books, as determined by PageRank, may be attributed to their association with specific genres that inherently possess broad mass appeal. To explore this hypothesis further, we tabulated the count of books within each genre among the top 100 PageRank books. Subsequently, we organized the genres in descending order based on book count as seen in Figure \@ref(tab:top-pagerank). We excluded the first two genres which are very broad and offer no analytical value ("General", "Authors, (A-Z)", “Literature & Fiction”).
 
 ```{r top-genres}
 pagerank_table <- data.table::fread(here::here("outputs/plots_and_tables/6_top-n-genres.csv"))
 
 knitr::kable(pagerank_table, caption = "Top 10 Genres by Count", format = "latex", position = "h!")
 ```
-
-<p>
 
 Sci-Fi & Fantasy emerged as the most popular genre. This is likely due to their unique ability to transport readers to imaginative worlds, offering an escape from reality and fostering a sense of wonder. These genres encourage creativity, exploration, and reflection on societal issues, with complex characters and timeless themes that resonate across cultures and generations. The genres' success could have been further fueled by strong fan communities, mainstream media adaptations, and the emotional engagement derived from characters facing extraordinary challenges. In essence, the allure of Sci-Fi and Fantasy lies in their capacity to captivate readers through boundless imagination, adventure, and a sense of belonging to a vibrant literary community.
 
@@ -162,22 +142,46 @@ The first model type serves as a baseline, incorporating solely item-specific fe
 
 Our algorithm of choice is a logistic regression. We believe that it is the most appropriate model because our problem at hand is binary in nature, and logistic regression outputs predicted probabilities that can be rounded to 0 or 1 based on some criteria. Additionally, logistic regression is not a ‘black-box’ model where we cannot see the training process, but rather we can fully understand the estimation process as it typically uses maximum likelihood estimation (MLE). Lastly, the coefficients of the logistic regression are also easily interpretable, where we can infer and gauge the contribution of each independent variable to the dependent variable.
 
+## Objective of our Models
+
+The primary objective for our model was to determine whether the network metrics of the books serve as better predictors of co-purchases, when compared against book-specific features. 
+
+**Baseline Features:**
+
+1. *num_common_genre*: This refers to the number of common genres in the entire genre string between 2 books. We do not make any distinction between possible main vs sub-genres as we did not have access to such data.
+
+2. *mean_salesrank*: This refers to the average salesrank of 2 books, collected from the metadata file
+
+3. *mean_reviews*: This refers to the average number of reviews left by users on Amazon, collected from the metadata file
+
+4. *mean_ratings*: This refers to the average rating collected from the metadata file. Ratings are on a scale of 1-5.
+
+**Network Metrics**
+
+All the following network metrics of the books, would be collected from Amazon's product co-purchasing network, at a specific point in time. For example,  from the Amazon product co-purchasing network from March 2 2003 `amazon0302.txt`
+
+1. *mean_degree*: The average degree centrality of 2 books
+
+2. *mean_betweenness*: The average betweenness centrality of 2 books  
+
+3. *mean_eigen*: The average eigen centrality of 2 books
+
+4. *mean_transitivity*: The average local transitivity of 2 books
+
+5. *mean_closeness*: The average closeness centrality of 2 books
+
+6. *mean_pagerank*: The average pagerank of 2 books 
+
+7. *mean_eigen*: The average Eigenvector centrality of 2 books
+
+7. *same_community*: Whether or not the 2 books belonged to the same community.
+
+We tried Louvain against the Greedy community detection algorithms but ultimately decided to go with the Louvain method as it resulted in clusters with higher modularity scores (i.e., better-defined cummunity structure). These serve as the training dataset for our two models.
 
 ## Methodology
 
-First, we exhaustively created all conceivable pairings among the books within our network. After this stage, we specifically isolated connected pairs to serve as our positive data points, while the unconnected pairs were designated as our negative data points. Each data point captured information such as the number of shared genres between the paired books, along with individual book attributes including sales rank and review counts. For our alternative model, we expanded the feature set by integrating additional node attributes derived from the network. These supplementary attributes encompassed the main network related measures:
+First, we exhaustively created all conceivable pairings among the books within our network. After this stage, we specifically isolated connected pairs to serve as our positive data points, while the unconnected pairs were designated as our negative data points. Each data point captured information such as the number of shared genres between the paired books, along with individual book attributes including sales rank and review counts. 
 
-```         
-1. Degree  
-2. Betweenness  
-3. Closeness  
-4. Local transitivity  
-5. PageRank  
-6. Eigenvector centrality  
-7. Louvain Community membership  
-```
-
-We tried several community detection algorithms but ultimately decided to go with the Louvain method as it resulted in clusters with higher modularity scores (i.e., better-defined cummunity structure). These serve as the training dataset for our two models.
 
 ### Downsampling of Negative Data Points
 
@@ -193,24 +197,29 @@ Handling of NA values are essential in ensuring that model training and model pr
 
 Scaling features before fitting a logistic regression model is crucial because it ensures that each feature contributes equally to the determination of the outcome. Logistic regression uses gradient descent as an optimization technique, which converges much faster when features are on similar scales. Without scaling, features with large values can disproportionately influence the model and result in an unstable training process, where the algorithm might oscillate and take a long time to find the global minimum, or potentially not converge at all. Thus, we used to use standard scaling for our dataset, which subtract the mean of the variable from each datapoint then divide it by its standard deviation. This ensures that each variable has a mean of 0 and a standard deviation of 1. There are alternative forms of scaling such as min-max scaling, but we believe that standard-scaling is sufficient for our case.
 
-### Objective of our Models
 
-The primary objective is for our model to discern the inherent patterns between these features and our target variable, which determines whether two books are co-purchased. To construct our testing set, we did not utilise the traditional train-test-split approach. Instead, we gathered node pairs that formed new connections between March and June. In essence, these pairs represent books that established co-purchase relationships during this time frame. This was achieved by getting all node pairs which are connected in June and further filtering out pairs already linked in March. From these selected node pairs, we retrieved their respective features for our baseline and alternative models. With our testing datasets, we then applied our two models and compared their respective accuracy scores.
+
+
+
+
+To construct our testing set, we did not utilise the traditional train-test-split approach. Instead, we gathered node pairs that formed new connections between March and June. In essence, these pairs represent books that established co-purchase relationships during this time frame. This was achieved by getting all node pairs which are connected in June and further filtering out pairs already linked in March. From these selected node pairs, we retrieved their respective features for our baseline and alternative models. With our testing datasets, we then applied our two models and compared their respective accuracy scores.
+
+#### Network Metrics
+
+
 
 ## Findings
 
-Just to re-emphasize, we want to test the hypothesis that network metrics serve as better predictors than item-specific information. Consequently, to test this hypothesis, the first model which is based on the 0302 dataset, only contains item-specific information, and the second model contains only network metrics. We then compare the predictive performance, evaluated using accuracy as the metric, of both models to determine the outcome of our hypothesis.
+Just to re-emphasize, we want to test the hypothesis that network metrics serve as better predictors than item-specific information. Consequently, to test this hypothesis, the first model which is based on the 0302 dataset, only contains item-specific information, and the second model contains only network metrics.
 
+We then compare the predictive performance, evaluated using accuracy as the metric, of both models to determine the outcome of our hypothesis.
 
-<p>
 
 ```{r first-regression-results }
 regression_table <- data.table::fread(here::here("outputs/plots_and_tables/7_regression-results.csv"))[1:3]
 
 knitr::kable(regression_table, caption = "Regression Results", format = "latex", position = "h!")
 ```
-
-<p>
 
 As seen from table 5 above, we first refer to the first two rows, which is in direct relation to our hypothesis. Although both model’s accuracy is less than 50%, which suggests that it is worse than a coin-flip, our hypothesis is still correct in that model two’s accuracy is quite significantly higher than model one’s accuracy, by approximately 5%. Plausible explanations for the low accuracy could be that the model was not tuned, where we merely used a rule of thumb in that predicted probabilities above the value 0.5 was rounded to 1, and 0 otherwise. Nonetheless, these results are indicative that network metrics serve as better predictors than item-specific information.
 Thereafter, we combined the 2 sets of information for a third model that makes use of both item-specific information and network metrics, as seen in row 3 in table 5 above. Although the performance was better than model 1, it was worse than model 2. A plausible explanation is that overfitting occurred due to there being too many independent variables, thus producing lousier out-of-sample performance. One solution to this is to perform regularization in the form of L1-norm regularization, but due to the time constraints and direction of the project, it was put on hold and can be researched in the future as an extension.
