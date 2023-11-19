@@ -4,7 +4,9 @@
 
 ### [Read the Project Report HERE](https://github.com/AmmarBagharib/amazon_graph_analysis/blob/master/analysis/report.pdf)
 
-Project done for the module, Network Analytics with Business Applications, in the National University of Singapore, Semester 1 AY2023/24
+Project done for the module, Network Analytics with Business Applications
+
+National University of Singapore, Semester 1 AY2023/24
 - Ammar Bagharib
 - Chen Yang
 - Randy Ng
