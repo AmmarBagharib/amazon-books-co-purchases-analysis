@@ -176,7 +176,7 @@ for (i in 1:100) {
 #count genres in top 100 pagerank books
 res <- top_genres %>% table() %>% as.data.frame()
 colnames(res) <- c("Genre", "Count")
-df3 <- res %>% arrange(desc(Count)) %>% .[3:13,]
+df3 <- res %>% arrange(desc(Count)) %>% .[4:13,]
 write.csv(df3, here("outputs/plots_and_tables/6_top-n-genres.csv"), row.names = FALSE)
 
 
