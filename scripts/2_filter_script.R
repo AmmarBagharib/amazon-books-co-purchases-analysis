@@ -12,7 +12,7 @@ setwd(here())
 
 ########################################################################
 # SPECIFY THE FILE NAME HERE
-graph_name <- "0601"
+graph_name <- "0601" #or 0302 or 0505
 
 #number of months between date of co purchases graph and 7th August 2006
 if (graph_name=="0302"){

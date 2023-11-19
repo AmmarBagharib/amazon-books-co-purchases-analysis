@@ -1,7 +1,13 @@
 ---
-title: "A Deep Dive into  the Network Behavior of Amazon Co-Purchases "
-author: Ammar Bagharib A0218111X, Chen Yang A0201905R, Ng Qing Yu Randy A0199577B  
-date: "National University of Singapore AY2023/24 Semester 1"
+title: "A Deep Dive into the Network of Book Co-Purchases on Amazon"
+author: |
+  | Ammar Bagharib A0218111X 
+  | Chen Yang A0201905R 
+  | Ng Qing Yu Randy A0199577B  
+date: | 
+  | National University of Singapore AY2023/24 Semester 1
+  |
+  | [(*Github Repo Here*)](https://github.com/AmmarBagharib/amazon_graph_analysis)
 output: 
   bookdown::pdf_document2:
       toc: true

@@ -1,27 +1,25 @@
 # Amazon Graph Analysis
 
-DBA4713 Network Analytics with Business Applications Group Project
+A deep dive into the Network of Amazon Book Co-Purchases
 
 # Authors:
 - Ammar Bagharib
 - Chen Yang
 - Randy Ng
 
+## Repo Structure:
+
+
+
 ## Replicate Analysis
 
-### 1. Creating Git Directory
-Then, to pull the repository to your local computer, open your Terminal/ Windows Prompt, and in your home folder, create a folder called 'git', navigate to that folder with:
-```
-cd git
-```
-
-### 2. Getting Github Repo onto local device
+### 1. Getting Github Repo onto local device
 Run:
 ```
 git clone https://github.com/AmmarBagharib/amazon_graph_analysis
 ```
 
-### 3. Navigate to local project folder
+### 2. Navigate to local project folder
 then run:
 ```
 cd amazon_graph_analysis
@@ -31,7 +29,7 @@ in Mac, in your Terminal you can run `pwd` and it should show:
 
 `(your home folder)/git/amazon_graph_analysis`
 
-### 4. Opening Project environment in RStudio
+### 3. Opening Project environment in RStudio
 
 Now, in your Terminal/ Windows Prompt run:
 ```
@@ -68,51 +66,9 @@ Once done, run:
 usethis::use_git()
 ```
 
-## Working with Git
+### 4. 
 
-1. Every time you want to start working on the project, navigate to `amazon_graph_analysis` file path on your computer and open `amazon_graph_analysis.Rproj`
 
-2. Ensure you **didn't make any changes you haven't already committed** to the repository. In Rstudio, you should be able to see the `Terminal` beside the `Console`. Click on `Terminal`, Run:
-```
-git status
-```
-
-3. Ensure your files are updated with the latest work on the repository. Run:
-```
-git pull
-```
-
-4. Upon working on your analysis, you should from time to time **check the changes** with running the following in your terminal:
-```
-git status
-```
-
-5. Every time you make small changes to a notebook file, testing a code/ model, commit your changes to github by doing these 2 steps:
-
-#example: you would like to commit changes on a **single file** e.g., `eda.rmd`.Run:
-```
-git add eda.rmd
-```
-
-#example: you would like to commit changes on **multiple files** you have worked on. Run:
-```
-git add eda.rmd analysis.rmd modelling.rmd
-```
-
-#example: you would like to commit changes on **all the files** you have worked on. Run:
-```
-git add .
-```
-
-6. You have to add in your message as to what changes were made to notify the group members. Thus, you do so with:
-```
-git commit -m "input message here"
-```
-
-7. Earlier in step 2, we pulled the files from the repository. Now, we **push** our updated files onto the repository with:
-```
-git push
-```
 
 8. Close RStudio when you are finished with your project:
 

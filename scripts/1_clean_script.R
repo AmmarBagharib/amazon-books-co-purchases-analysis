@@ -1,3 +1,8 @@
+########################################################################
+#This script outputs the following file:
+# 1. a csv file item_index_books.csv containing all book specific features of all the books from amazon-meta.txt
+# baseline features include only book related features
+
 library(dplyr)
 library(tidyr)
 library(igraph)
