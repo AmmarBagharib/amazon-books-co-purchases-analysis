@@ -1,15 +1,14 @@
-# Amazon Graph Analysis
+<img src="https://github.com/AmmarBagharib/amazon_graph_analysis/blob/master/photos/amazon-logo-1.png" width="400" height="130" />
 
-A deep dive into the Network of Amazon Book Co-Purchases
+# A deep dive into the Network of Amazon Book Co-Purchases
+
+### [Read the Project Report HERE](https://github.com/AmmarBagharib/amazon_graph_analysis/blob/master/analysis/report.pdf)
+
 
 # Authors:
 - Ammar Bagharib
 - Chen Yang
 - Randy Ng
-
-## Repo Structure:
-
-![alt text](http://url/to/img.png)
 
 ## Replicate Analysis
 
@@ -66,14 +65,9 @@ Once done, run:
 usethis::use_git()
 ```
 
-### 4. 
+### 4. Replicate Analysis
 
-
-
-8. Close RStudio when you are finished with your project:
-
-
-# Note: NEVER do work on github on a browser, while working on your analysis on your RStudio at the SAME TIME. Should you commit your work on both ends, there will be a merge conflict, because the files on your computer is different from the files on the github repo.
+You can run the scripts to generate the outputs needed by the report!
 
 ## License
 
