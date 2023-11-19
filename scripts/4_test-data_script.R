@@ -1,8 +1,6 @@
 ########################################################################
-#This script outputs 2 files:
-# 1. a csv file containing the newly formed links in 0602, with network metrics of 0302 graph appended
-# 2. a csv file containing the newly formed links in 0602, with network metrics of 0505 graph appended
-# baseline features include only book related features
+# This script outputs the tables relating to our regression model we used in our report
+
 library(data.table)
 library(here)
 library(dplyr)

@@ -2,6 +2,7 @@
 #This script outputs the following file:
 # 1. a csv file item_index_books.csv containing all book specific features of all the books from amazon-meta.txt
 # baseline features include only book related features
+# this code takes very long to run, thus @Prof, we provide the file for you.
 
 library(dplyr)
 library(tidyr)

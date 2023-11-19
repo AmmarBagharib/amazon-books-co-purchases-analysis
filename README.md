@@ -9,7 +9,7 @@ A deep dive into the Network of Amazon Book Co-Purchases
 
 ## Repo Structure:
 
-
+![alt text](http://url/to/img.png)
 
 ## Replicate Analysis
 

@@ -1,3 +1,6 @@
+########################################################################
+# This script outputs the plots and tables we used in our report not related to regression
+
 library(igraph)
 library(ggplot2)
 library(dplyr)

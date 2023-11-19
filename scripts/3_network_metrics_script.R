@@ -1,6 +1,8 @@
 ########################################################################
 #This script outputs 1 file:
-# 1. a csv file containing the the baseline features of the graph we're working with, 
+# 1. a csv file containing the the baseline features of the graph we're working with,
+# if 0302, generate a csv file containing 0302 100,000 nodes sampled subgraph with network metrics
+# if 0302, generate 0302 sample subgraph in gml file
 # along with network metrics
 # baseline features include only book related features
 library(igraph)

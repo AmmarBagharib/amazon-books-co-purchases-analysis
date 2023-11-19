@@ -1,3 +1,10 @@
+########################################################################
+#This script outputs 4 files:
+# 1. the logistic regression model using 0302 book features only
+# 2. the logistic regression model using 0302 network metrics only
+# 3. the logistic regression model using 0302 book features + network metrics
+# 4. the logistic regression model using 0505 network metrics only
+
 library(here)
 library(dplyr)
 setwd(here())
