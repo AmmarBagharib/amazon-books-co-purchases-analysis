@@ -1,8 +1,8 @@
 <img src="https://github.com/AmmarBagharib/amazon_graph_analysis/blob/master/photos/amazon-logo-1.png" width="400" height="130" />
 
-## A deep dive into the Network of Amazon Book Co-Purchases
+## A Comprehensive Analysis of Singapore Hotel Reviews Pre and Post-COVID Era
 
-### [Read the Project Report HERE](https://github.com/AmmarBagharib/amazon_graph_analysis/blob/master/analysis/report.pdf)
+### Read the Project Report <[HERE](https://github.com/AmmarBagharib/sg-hotels-sentiment-analysis/blob/main/analysis/report.pdf)>
 
 Project done for the module, Network Analytics with Business Applications
 
